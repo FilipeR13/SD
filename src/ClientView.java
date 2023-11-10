@@ -1,3 +1,5 @@
+import sd23.JobFunctionException;
+
 public class ClientView {
     private ClientController client;
 
@@ -5,14 +7,24 @@ public class ClientView {
         this.client = client;
     }
 
-    public void run() {
+    public void mainMenu() throws JobFunctionException {
         Menu menuPrincipal = new Menu(new String[]{
                 "Login",
                 "Register"
         });
 
-        menuPrincipal.setHandler(1,client :: Login);
-        menuPrincipal.setHandler(2,client :: Register);
+        menuPrincipal.setHandler(1,client :: login);
+        menuPrincipal.setHandler(2,client :: register);
         menuPrincipal.run();
+    }
+
+    public void optionsMenu() throws JobFunctionException {
+
+        Menu optionsMenu = new Menu(new String[]{
+                "Send Program",
+        });
+
+        optionsMenu.setHandler(1,client :: sendProgram);
+        optionsMenu.run();
     }
 }

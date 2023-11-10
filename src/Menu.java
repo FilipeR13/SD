@@ -1,9 +1,11 @@
+import sd23.JobFunctionException;
+
 import java.util.*;
 
 
 public class Menu {
     public interface Handler {
-        public void execute();
+        public void execute() throws JobFunctionException;
     }
 
     public interface PreCondition {
@@ -24,7 +26,7 @@ public class Menu {
         });
     }
 
-    public void run() {
+    public void run() throws JobFunctionException {
         int choice;
         do {
             showMenu();
