@@ -106,7 +106,7 @@ public class ClientController {
         System.out.println("OI");
     }
 
-    public void handleCommunication(String username, String password) {
+    public void handleCommunication() {
         try {
 
             Thread communicationThread = new Thread(() -> {

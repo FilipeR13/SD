@@ -71,7 +71,7 @@ public class Server {
             // Keep the connection open for ongoing communication
             while (true) {
                 String clientMessage = in.readLine();
-                if (clientMessage == null || clientMessage.equals("DISCONNECT")) {
+                if (clientMessage.equals("quit")) {
                     // Client disconnected or requested to disconnect
                     connectedClients.remove(username);
                     break;
