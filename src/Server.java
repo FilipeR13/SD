@@ -1,3 +1,6 @@
+import sd23.JobFunction;
+import sd23.JobFunctionException;
+
 import java.io.*;
 import java.net.*;
 import java.util.HashMap;
@@ -44,9 +47,6 @@ public class Server {
                 case "REGISTER":
                     handleRegister(in, out);
                     break;
-                case "SEND_MESSAGE":
-                    handleSendMessage(in, out);
-                    break;
                 default:
                     out.println("Invalid action");
             }
@@ -76,10 +76,20 @@ public class Server {
                     connectedClients.remove(username);
                     break;
                 } else {
-                    // Process the client's message (you can customize this part)
+                    switch (clientMessage) {
+                        case "SEND_MESSAGE":
+                            handleSendMessage(in, out);
+                            break;
+                        case "SEND_PROGRAM":
+                            handleSendProgram(in, out);
+                            break;
+                        default:
+                            out.println("Invalid action");
+                    }
+                    // Process the client's message
                     System.out.println("Received from " + username + ": " + clientMessage);
 
-                    // Example: Send a response back to the client
+                    // Confirms that the message was received
                     out.println("Server: Message received");
                 }
             }
@@ -117,6 +127,17 @@ public class Server {
             receiverOut.println("Message from " + senderUsername + ": " + message);
         } else {
             out.println("User not online or does not exist");
+        }
+    }
+
+    private void handleSendProgram(BufferedReader in, PrintWriter out) throws IOException{
+        try{
+            byte[] file = in.readLine().getBytes();
+            byte[] output = JobFunction.execute(file);
+
+            out.println("success, returned "+output.length+" bytes");
+        }catch (JobFunctionException e){
+            out.println("job failed: code="+e.getCode()+" message="+e.getMessage());
         }
     }
 }

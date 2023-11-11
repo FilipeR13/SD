@@ -1,11 +1,9 @@
 import sd23.JobFunction;
 import sd23.JobFunctionException;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class ClientController {
@@ -82,7 +80,7 @@ public class ClientController {
 
         System.out.print("Nome de Utilizador :: ");
         String username = sc.nextLine();
-        System.out.print("Palavra-Passe:: ");
+        System.out.print("Palavra-Passe :: ");
         String password = sc.nextLine();
 
         // Send registration information to the server without explicit action
@@ -102,8 +100,30 @@ public class ClientController {
         }
     }
 
-    public void sendProgram() {
-        System.out.println("OI");
+    public void sendProgram() throws IOException {
+
+        System.out.print("Path do ficheiro :: ");
+        String file_name = sc.nextLine();
+
+        File file_execute = new File(file_name);
+        FileInputStream read_file = new FileInputStream(file_execute);
+        byte[] array = new byte[(int) file_execute.length()];
+
+        // read file into bytes[] and closing the file input stream to avoid memory leakage
+        read_file.read(array);
+        read_file.close();
+
+        // Send byte array to the server
+
+        out.println("SEND_PROGRAM");
+        out.println(Arrays.toString(array));
+
+        try {
+            String response = in.readLine();
+            System.out.println("Server response: " + response);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void handleCommunication() {

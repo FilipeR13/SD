@@ -1,11 +1,13 @@
 import sd23.JobFunctionException;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.*;
 
 
 public class Menu {
     public interface Handler {
-        public void execute() throws JobFunctionException;
+        public void execute() throws JobFunctionException, IOException;
     }
 
     public interface PreCondition {
@@ -26,7 +28,7 @@ public class Menu {
         });
     }
 
-    public void run() throws JobFunctionException {
+    public void run() throws JobFunctionException, IOException {
         int choice;
         do {
             showMenu();

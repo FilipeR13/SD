@@ -1,5 +1,7 @@
 import sd23.JobFunctionException;
 
+import java.io.IOException;
+
 public class ClientView {
     private ClientController client;
 
@@ -7,7 +9,7 @@ public class ClientView {
         this.client = client;
     }
 
-    public void mainMenu() throws JobFunctionException {
+    public void mainMenu() throws JobFunctionException, IOException {
         Menu menuPrincipal = new Menu(new String[]{
                 "Login",
                 "Register"
@@ -18,7 +20,7 @@ public class ClientView {
         menuPrincipal.run();
     }
 
-    public void optionsMenu() throws JobFunctionException {
+    public void optionsMenu() throws JobFunctionException, IOException {
 
         Menu optionsMenu = new Menu(new String[]{
                 "Send Program",
