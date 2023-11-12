@@ -39,9 +39,6 @@ public class ClientController {
     }
 
     public void login() {
-        // Establish connection to the server
-        establishConnection();
-
         System.out.print("Nome de Utilizador :: ");
         String username = sc.nextLine();
         System.out.print("Palavra-Passe:: ");
@@ -52,6 +49,7 @@ public class ClientController {
         out.println(username);
         out.println(password);
 
+
         // Receive a response from the server
         try {
             String response = in.readLine();
@@ -61,12 +59,7 @@ public class ClientController {
             if (response.equals("Login successful")) {
                 ClientView view = new ClientView(this);
                 view.optionsMenu();
-               // handleCommunication(username, password);
             }
-            else{
-                closeConnection();
-            }
-
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JobFunctionException e) {
@@ -75,9 +68,6 @@ public class ClientController {
     }
 
     public void register() {
-        // Establish connection to the server
-        establishConnection();
-
         System.out.print("Nome de Utilizador :: ");
         String username = sc.nextLine();
         System.out.print("Palavra-Passe :: ");
@@ -92,9 +82,6 @@ public class ClientController {
         try {
             String response = in.readLine();
             System.out.println("Server response: " + response);
-
-            closeConnection();
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -122,45 +109,6 @@ public class ClientController {
             String response = in.readLine();
             System.out.println("Server response: " + response);
         } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void handleCommunication() {
-        try {
-
-            Thread communicationThread = new Thread(() -> {
-                try {
-                    while (true) {
-
-                        // Read user input if available
-                        if (sc.hasNextLine()) {
-                            String userInput = sc.nextLine();
-
-                            // Send user input as a message to the server
-                            out.println("SEND_MESSAGE");
-                            out.println(userInput);
-                        }
-
-                        // Read messages from the server
-                        String serverMessage = in.readLine();
-                        if (serverMessage == null) {
-                            // Server closed the connection
-                            System.out.println("Server disconnected");
-                            closeConnection();
-                            break;
-                        }
-                        System.out.println(serverMessage);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-
-            communicationThread.start();
-
-            communicationThread.join();
-        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }

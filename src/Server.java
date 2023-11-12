@@ -32,31 +32,42 @@ public class Server {
     }
 
     private void handleClient(Socket clientSocket) {
+        BufferedReader in = null;
+        PrintWriter out = null;
+
         try {
             // Create input and output streams for communication
-            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            // Read data from the client
-            String action = in.readLine();
+            // Keep the connection open for ongoing communication
+            while (true) {
+                // Read data from the client
+                String action = in.readLine();
 
-            switch (action) {
-                case "LOGIN":
-                    handleLogin(in, out);
-                    break;
-                case "REGISTER":
-                    handleRegister(in, out);
-                    break;
-                default:
-                    out.println("Invalid action");
+                switch (action) {
+                    case "LOGIN":
+                        handleLogin(in, out);
+                        break;
+                    case "REGISTER":
+                        handleRegister(in, out);
+                        break;
+                    default:
+                        out.println("Invalid action");
+                }
             }
-
-            // Close the connections
-            in.close();
-            out.close();
-            clientSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                // Close the streams and clientSocket
+                in.close();
+                out.close();
+                clientSocket.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -71,26 +82,21 @@ public class Server {
             // Keep the connection open for ongoing communication
             while (true) {
                 String clientMessage = in.readLine();
+
                 if (clientMessage.equals("quit")) {
                     // Client disconnected or requested to disconnect
                     connectedClients.remove(username);
                     break;
                 } else {
                     switch (clientMessage) {
-                        case "SEND_MESSAGE":
-                            handleSendMessage(in, out);
-                            break;
                         case "SEND_PROGRAM":
                             handleSendProgram(in, out);
+                            out.println("Message received");
                             break;
                         default:
                             out.println("Invalid action");
+                            break;
                     }
-                    // Process the client's message
-                    System.out.println("Received from " + username + ": " + clientMessage);
-
-                    // Confirms that the message was received
-                    out.println("Server: Message received");
                 }
             }
         } else {
@@ -117,20 +123,8 @@ public class Server {
         }
     }
 
-    private void handleSendMessage(BufferedReader in, PrintWriter out) throws IOException {
-        String senderUsername = in.readLine();
-        String receiverUsername = in.readLine();
-        String message = in.readLine();
-
-        if (connectedClients.containsKey(receiverUsername)) {
-            PrintWriter receiverOut = connectedClients.get(receiverUsername);
-            receiverOut.println("Message from " + senderUsername + ": " + message);
-        } else {
-            out.println("User not online or does not exist");
-        }
-    }
-
     private void handleSendProgram(BufferedReader in, PrintWriter out) throws IOException{
+        System.out.println("Received request to execute job");
         try{
             byte[] file = in.readLine().getBytes();
             byte[] output = JobFunction.execute(file);

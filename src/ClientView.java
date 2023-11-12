@@ -23,12 +23,10 @@ public class ClientView {
     public void optionsMenu() throws JobFunctionException, IOException {
 
         Menu optionsMenu = new Menu(new String[]{
-                "Send Program",
-                "Send Message"
+                "Send Program"
         });
 
         optionsMenu.setHandler(1,client :: sendProgram);
-        optionsMenu.setHandler(2,client :: handleCommunication);
         optionsMenu.run();
     }
 }
