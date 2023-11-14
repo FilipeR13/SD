@@ -1,5 +1,7 @@
 public class test {
     public void main(String[] args) {
-        System.out.println("Hello World!");
+        int j = 0;
+        for (int i = 0; i < 10; i++)
+            j += i;
     }
 }

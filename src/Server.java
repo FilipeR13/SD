@@ -3,12 +3,16 @@ import sd23.JobFunctionException;
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Server {
     private Map<String, Account> accounts = new HashMap<>();
     private Map<String, PrintWriter> connectedClients = new HashMap<>();
+    private int max_memory = 1000;
+    private int memory_used = 0;
 
     public static void main(String[] args) {
         int port = 9090; // Choose a port number
@@ -44,6 +48,10 @@ public class Server {
             while (true) {
                 // Read data from the client
                 String action = in.readLine();
+                if (action == null) {
+                    System.out.println("Client disconnected");
+                    return;
+                 }
 
                 switch (action) {
                     case "LOGIN":
@@ -82,21 +90,14 @@ public class Server {
             // Keep the connection open for ongoing communication
             while (true) {
                 String clientMessage = in.readLine();
-
-                if (clientMessage.equals("quit")) {
-                    // Client disconnected or requested to disconnect
-                    connectedClients.remove(username);
-                    break;
+                if (clientMessage == null)
+                    return;
+                if (clientMessage.equals("SEND_PROGRAM")) {
+                    handleSendProgram(in, out);
+                    out.println("Message received");
+                    System.out.println("Message received");
                 } else {
-                    switch (clientMessage) {
-                        case "SEND_PROGRAM":
-                            handleSendProgram(in, out);
-                            out.println("Message received");
-                            break;
-                        default:
-                            out.println("Invalid action");
-                            break;
-                    }
+                    out.println("Invalid action");
                 }
             }
         } else {
@@ -125,13 +126,29 @@ public class Server {
 
     private void handleSendProgram(BufferedReader in, PrintWriter out) throws IOException{
         System.out.println("Received request to execute job");
+
+        int memoria = Integer.parseInt(in.readLine());
+
+        System.out.println("Memoria: " + memoria);
+        if (memoria > max_memory - memory_used){
+            out.println("Not enough memory");
+            return;
+        }
+        memory_used += memoria;
+
+        System.out.println("Memory used: " + memory_used);
+
         try{
             byte[] file = in.readLine().getBytes();
             byte[] output = JobFunction.execute(file);
-
-            out.println("success, returned "+output.length+" bytes");
+            System.out.println(Arrays.toString(output));
+            out.println(Arrays.toString(output));
         }catch (JobFunctionException e){
             out.println("job failed: code="+e.getCode()+" message="+e.getMessage());
         }
+        memory_used -= memoria;
+
+        System.out.println("Memory used: " + memory_used);
+
     }
 }

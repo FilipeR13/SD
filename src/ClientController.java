@@ -3,9 +3,9 @@ import sd23.JobFunctionException;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Scanner;
-
 public class ClientController {
     private Account u;
     private Socket socket;
@@ -92,6 +92,10 @@ public class ClientController {
         System.out.print("Path do ficheiro :: ");
         String file_name = sc.nextLine();
 
+        System.out.print("Memória para o programa (MB):: ");
+        String memoria = sc.nextLine();
+
+
         File file_execute = new File(file_name);
         FileInputStream read_file = new FileInputStream(file_execute);
         byte[] array = new byte[(int) file_execute.length()];
@@ -103,11 +107,26 @@ public class ClientController {
         // Send byte array to the server
 
         out.println("SEND_PROGRAM");
+        out.println(memoria);
         out.println(Arrays.toString(array));
 
         try {
+            System.out.println("Waiting for server response");
             String response = in.readLine();
-            System.out.println("Server response: " + response);
+            String var = in.readLine();
+            System.out.println("After server response");
+
+            if (response.equals("Not enough memory")) {
+                System.out.println("Not enough memory");
+                return;
+            }
+            // aplicar uma expressao a todos elementos de um array
+            Object[] result = Arrays.stream(response.substring(1, response.length() - 1).split(", ")).map(Byte::parseByte).toArray();
+            byte[] result2 = new byte[result.length];
+            for (int i = 0; i < result.length; i++) {
+                result2[i] = (byte) result[i];
+            }
+            System.out.println("Server response: " + result2 + " " + var);
         } catch (IOException e) {
             e.printStackTrace();
         }
