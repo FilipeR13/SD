@@ -3,6 +3,7 @@ import sd23.JobFunctionException;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -27,13 +28,13 @@ public class ClientController {
         }
     }
 
-    public void closeConnection() {
+    public void closeConnection() throws IOException {
         // close the connection to the server
         try {
             in.close();
             out.close();
             socket.close();
-        } catch (IOException e) {
+        } catch (SocketException e) {
             e.printStackTrace();
         }
     }
@@ -70,8 +71,10 @@ public class ClientController {
     public void register() {
         System.out.print("Nome de Utilizador :: ");
         String username = sc.nextLine();
+        this.u.setNomeUtilizador(username);
         System.out.print("Palavra-Passe :: ");
         String password = sc.nextLine();
+        this.u.setPassword(password);
 
         // Send registration information to the server without explicit action
         out.println("REGISTER");
@@ -107,17 +110,17 @@ public class ClientController {
         // Send byte array to the server
 
         out.println("SEND_PROGRAM");
+        out.println(u.getNomeUtilizador());
         out.println(memoria);
         out.println(Arrays.toString(array));
 
         try {
-            System.out.println("Waiting for server response");
             String response = in.readLine();
             String var = in.readLine();
-            System.out.println("After server response");
 
-            if (response.equals("Not enough memory")) {
-                System.out.println("Not enough memory");
+            if (response.equals("Not enough memory, the job is waiting to be executed!")){
+                System.out.println(response);
+                pendingProgram(var);
                 return;
             }
             // aplicar uma expressao a todos elementos de um array
@@ -126,9 +129,38 @@ public class ClientController {
             for (int i = 0; i < result.length; i++) {
                 result2[i] = (byte) result[i];
             }
-            System.out.println("Server response: " + result2 + " " + var);
+            String result3 = Arrays.toString(result2);
+            System.out.println("Server response: " + result3 + " " + var);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    public void pendingProgram(String var) {
+        try{
+            String response = in.readLine();
+            Object[] result = Arrays.stream(response.substring(1, response.length() - 1).split(", ")).map(Byte::parseByte).toArray();
+            byte[] result2 = new byte[result.length];
+            for (int i = 0; i < result.length; i++) {
+                result2[i] = (byte) result[i];
+            }
+            String result3 = Arrays.toString(result2);
+            System.out.println("Server response: " + result3 + " " + var);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void serverAvailability() {
+        out.println("SERVER_AVAILABILITY");
+
+        try{
+            int memory_available = Integer.parseInt(in.readLine());
+            int number_jobs = Integer.parseInt(in.readLine());
+            System.out.println("The server has " + memory_available + " MB of memory left and there are currently " + number_jobs + " jobs waiting to be executed!");
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+    }
 }
+
