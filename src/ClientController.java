@@ -13,48 +13,62 @@ public class ClientController {
 
     private static class ReceiveResponse implements Runnable{
         private BufferedReader in;
-        private PrintWriter out;
 
-        public ReceiveResponse(BufferedReader in, PrintWriter out){
+        public ReceiveResponse(BufferedReader in){
             this.in = in;
-            this.out = out;
         }
 
-        public void pendingProgram() {
+        public void pendingProgram(String id) {
             try{
-                int id = Integer.parseInt(in.readLine());
+                String message_type = in.readLine();
+                String value = in.readLine();
                 String response = in.readLine();
-                Object[] result = Arrays.stream(response.substring(1, response.length() - 1).split(", ")).map(Byte::parseByte).toArray();
-                byte[] result2 = new byte[result.length];
-                for (int i = 0; i < result.length; i++) {
-                    result2[i] = (byte) result[i];
+
+                if(!message_type.equals("JOB_DONE")){
+                    return;
                 }
-                String result3 = Arrays.toString(result2);
-                System.out.println("Server response: " + id + " " + result3);
+                getResult(response, value);
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
+        public void getResult(String response, String id){
+            Object[] result = Arrays.stream(response.substring(1, response.length() - 1).split(", ")).map(Byte::parseByte).toArray();
+            byte[] to_byte = new byte[result.length];
+            for (int i = 0; i < result.length; i++) {
+                to_byte[i] = (byte) result[i];
+            }
+            String result_string = Arrays.toString(to_byte);
+            System.out.println("Server response: " + id + " " + result_string);
+        }
+
         public void run(){
             try {
-                // Wait for the server response for the last sent program
-                int id = Integer.parseInt(in.readLine());
-                String response = in.readLine();
+                while (true) {
 
-                if (response.equals("Not enough memory, the job is waiting to be executed!")) {
-                    System.out.println(response);
-                    pendingProgram();
-                    return;
-                }
 
-                Object[] result = Arrays.stream(response.substring(1, response.length() - 1).split(", ")).map(Byte::parseByte).toArray();
-                byte[] result2 = new byte[result.length];
-                for (int i = 0; i < result.length; i++) {
-                    result2[i] = (byte) result[i];
+                    String message_type = in.readLine();
+                    String value = in.readLine();
+                    String response = in.readLine();
+
+                    if (message_type.equals("NOT_AVAILABLE")) {
+                        System.out.println(response);
+                        pendingProgram(value);
+                    }
+
+                    if(message_type.equals("JOB_DONE")){
+                        getResult(response, value);
+                    }
+
+                    if(message_type.equals("SERVER_STATUS")){
+                        System.out.println("The server has " + value + " MB of memory left and there are currently " + response + " jobs waiting to be executed!");
+                    }
+
+
+
                 }
-                String result3 = Arrays.toString(result2);
-                System.out.println("Server response: " + id + " " + result3);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -113,6 +127,8 @@ public class ClientController {
 
             // Check if login was successful
             if (response.equals("Login successful")) {
+                Thread t = new Thread(new ReceiveResponse(in));
+                t.start();
                 ClientView view = new ClientView(this);
                 view.optionsMenu();
             }
@@ -171,20 +187,10 @@ public class ClientController {
         out.println(Arrays.toString(array));
         this.pedido_id++;
 
-        Thread t = new Thread(new ReceiveResponse(in, out));
-        t.start();
     }
 
     public void serverAvailability() {
         out.println("SERVER_AVAILABILITY");
-
-        try{
-            int memory_available = Integer.parseInt(in.readLine());
-            int number_jobs = Integer.parseInt(in.readLine());
-            System.out.println("The server has " + memory_available + " MB of memory left and there are currently " + number_jobs + " jobs waiting to be executed!");
-        }catch (IOException e){
-            e.printStackTrace();
-        }
     }
 }
 
