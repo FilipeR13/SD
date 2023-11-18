@@ -46,29 +46,24 @@ public class ClientController {
 
         public void run(){
             try {
-                while (true) {
 
+                String message_type = in.readLine();
+                String value = in.readLine();
+                String response = in.readLine();
 
-                    String message_type = in.readLine();
-                    String value = in.readLine();
-                    String response = in.readLine();
-
-                    if (message_type.equals("NOT_AVAILABLE")) {
-                        System.out.println(response);
-                        pendingProgram(value);
-                    }
-
-                    if(message_type.equals("JOB_DONE")){
-                        getResult(response, value);
-                    }
-
-                    if(message_type.equals("SERVER_STATUS")){
-                        System.out.println("The server has " + value + " MB of memory left and there are currently " + response + " jobs waiting to be executed!");
-                    }
-
-
-
+                if (message_type.equals("NOT_AVAILABLE")) {
+                    System.out.println(response);
+                    pendingProgram(value);
                 }
+
+                if(message_type.equals("JOB_DONE")){
+                    getResult(response, value);
+                }
+
+                if(message_type.equals("SERVER_STATUS")){
+                    System.out.println("The server has " + value + " MB of memory left and there are currently " + response + " jobs waiting to be executed!");
+                }
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -127,8 +122,6 @@ public class ClientController {
 
             // Check if login was successful
             if (response.equals("Login successful")) {
-                Thread t = new Thread(new ReceiveResponse(in));
-                t.start();
                 ClientView view = new ClientView(this);
                 view.optionsMenu();
             }
@@ -187,10 +180,15 @@ public class ClientController {
         out.println(Arrays.toString(array));
         this.pedido_id++;
 
+        Thread t = new Thread(new ReceiveResponse(in));
+        t.start();
+
     }
 
     public void serverAvailability() {
         out.println("SERVER_AVAILABILITY");
+        Thread t = new Thread(new ReceiveResponse(in));
+        t.start();
     }
 }
 
