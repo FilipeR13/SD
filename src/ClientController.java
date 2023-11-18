@@ -7,12 +7,67 @@ import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Scanner;
+import java.util.Stack;
+
 public class ClientController {
+
+    private static class ReceiveResponse implements Runnable{
+        private BufferedReader in;
+        private PrintWriter out;
+
+        public ReceiveResponse(BufferedReader in, PrintWriter out){
+            this.in = in;
+            this.out = out;
+        }
+
+        public void pendingProgram() {
+            try{
+                int id = Integer.parseInt(in.readLine());
+                String response = in.readLine();
+                Object[] result = Arrays.stream(response.substring(1, response.length() - 1).split(", ")).map(Byte::parseByte).toArray();
+                byte[] result2 = new byte[result.length];
+                for (int i = 0; i < result.length; i++) {
+                    result2[i] = (byte) result[i];
+                }
+                String result3 = Arrays.toString(result2);
+                System.out.println("Server response: " + id + " " + result3);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void run(){
+            try {
+                // Wait for the server response for the last sent program
+                int id = Integer.parseInt(in.readLine());
+                String response = in.readLine();
+
+                if (response.equals("Not enough memory, the job is waiting to be executed!")) {
+                    System.out.println(response);
+                    pendingProgram();
+                    return;
+                }
+
+                Object[] result = Arrays.stream(response.substring(1, response.length() - 1).split(", ")).map(Byte::parseByte).toArray();
+                byte[] result2 = new byte[result.length];
+                for (int i = 0; i < result.length; i++) {
+                    result2[i] = (byte) result[i];
+                }
+                String result3 = Arrays.toString(result2);
+                System.out.println("Server response: " + id + " " + result3);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
     private Account u;
     private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
     private Scanner sc = new Scanner(System.in);
+
+    private int pedido_id = 1;
 
     public ClientController(Account u) {
         this.u = u;
@@ -111,44 +166,13 @@ public class ClientController {
 
         out.println("SEND_PROGRAM");
         out.println(u.getNomeUtilizador());
+        out.println(this.pedido_id);
         out.println(memoria);
         out.println(Arrays.toString(array));
+        this.pedido_id++;
 
-        try {
-            String response = in.readLine();
-            String var = in.readLine();
-
-            if (response.equals("Not enough memory, the job is waiting to be executed!")){
-                System.out.println(response);
-                pendingProgram(var);
-                return;
-            }
-            // aplicar uma expressao a todos elementos de um array
-            Object[] result = Arrays.stream(response.substring(1, response.length() - 1).split(", ")).map(Byte::parseByte).toArray();
-            byte[] result2 = new byte[result.length];
-            for (int i = 0; i < result.length; i++) {
-                result2[i] = (byte) result[i];
-            }
-            String result3 = Arrays.toString(result2);
-            System.out.println("Server response: " + result3 + " " + var);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void pendingProgram(String var) {
-        try{
-            String response = in.readLine();
-            Object[] result = Arrays.stream(response.substring(1, response.length() - 1).split(", ")).map(Byte::parseByte).toArray();
-            byte[] result2 = new byte[result.length];
-            for (int i = 0; i < result.length; i++) {
-                result2[i] = (byte) result[i];
-            }
-            String result3 = Arrays.toString(result2);
-            System.out.println("Server response: " + result3 + " " + var);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Thread t = new Thread(new ReceiveResponse(in, out));
+        t.start();
     }
 
     public void serverAvailability() {

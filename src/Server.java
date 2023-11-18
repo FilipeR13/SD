@@ -79,7 +79,6 @@ public class Server {
                     switch (clientMessage) {
                         case "SEND_PROGRAM":
                             handleSendProgram(in, out);
-                            out.println("Message received");
                             break;
                         case "SERVER_AVAILABILITY":
                             out.println(server.max_memory - server.memory_used);
@@ -119,13 +118,14 @@ public class Server {
             System.out.println("Received request to execute job");
 
             String username = in.readLine();
+            int id = Integer.parseInt(in.readLine());
             int memoria = Integer.parseInt(in.readLine());
             byte[] file = in.readLine().getBytes();
 
             if (memoria > server.max_memory - server.memory_used){
                 out.println("Not enough memory, the job is waiting to be executed!");
 
-                server.pendingPrograms.offer(new ProgramRequest(username, memoria, file));
+                server.pendingPrograms.offer(new ProgramRequest(username, id, memoria, file));
                 return;
             }
             server.memory_used += memoria;
@@ -135,6 +135,7 @@ public class Server {
             try{
                 byte[] output = JobFunction.execute(file);
                 System.out.println(Arrays.toString(output));
+                out.println(id);
                 out.println(Arrays.toString(output));
             }catch (JobFunctionException e){
                 out.println("job failed: code="+e.getCode()+" message="+e.getMessage());
@@ -155,6 +156,7 @@ public class Server {
                     clientOut = server.connectedClients.get(pendingProgram.getClientUsername());
 
                     if (clientOut != null) {
+                        clientOut.println(pendingProgram.getPedido_id());
                         clientOut.println(Arrays.toString(output));
                     }
                 } catch (JobFunctionException e) {
