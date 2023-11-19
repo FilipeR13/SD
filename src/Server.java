@@ -5,10 +5,11 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 public class Server {
-
-    public static class ClientHandler implements Runnable {
+    private static class ClientHandler implements Runnable {
         private Socket clientSocket;
         private Server server;
 
@@ -78,12 +79,28 @@ public class Server {
                         return;
                     switch (clientMessage) {
                         case "SEND_PROGRAM":
-                            handleSendProgram(in, out);
+                            String username_client = in.readLine();
+                            int id = Integer.parseInt(in.readLine());
+                            int memoria = Integer.parseInt(in.readLine());
+                            byte[] file = in.readLine().getBytes();
+                            new Thread(() -> {
+                                try {
+                                    handleSendProgram(in, out, username_client, id, memoria, file);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }).start();
                             break;
                         case "SERVER_AVAILABILITY":
-                            out.println("SERVER_STATUS");
-                            out.println(server.max_memory - server.memory_used);
-                            out.println(server.pendingPrograms.size());
+                            new Thread(() -> {
+                                try {
+                                    out.println("SERVER_STATUS");
+                                    out.println(server.max_memory - server.memory_used);
+                                    out.println(server.pendingPrograms.size());
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }).start();
                             break;
                         default:
                             out.println("Invalid action");
@@ -115,13 +132,8 @@ public class Server {
             return username;
         }
 
-        public void handleSendProgram(BufferedReader in, PrintWriter out) throws IOException{
+        public void handleSendProgram(BufferedReader in, PrintWriter out, String username, int id, int memoria, byte[] file) throws IOException{
             System.out.println("Received request to execute job");
-
-            String username = in.readLine();
-            int id = Integer.parseInt(in.readLine());
-            int memoria = Integer.parseInt(in.readLine());
-            byte[] file = in.readLine().getBytes();
 
             if (memoria > server.max_memory - server.memory_used){
                 out.println("NOT_AVAILABLE");
