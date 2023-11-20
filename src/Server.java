@@ -1,200 +1,28 @@
-import sd23.JobFunction;
-import sd23.JobFunctionException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-import java.io.*;
-import java.net.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-
-public class Server {
-    private static class ClientHandler implements Runnable {
-        private Socket clientSocket;
-        private Server server;
-
-        public ClientHandler(Socket clientSocket, Server server) {
-            this.clientSocket = clientSocket;
-            this.server = server;
-        }
-
-        public void run(){
-            BufferedReader in = null;
-            PrintWriter out = null;
-            String username = null;
-
-            try {
-                // Create input and output streams for communication
-                in = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
-                out = new PrintWriter(this.clientSocket.getOutputStream(), true);
-
-                // Keep the connection open for ongoing communication
-                while (true) {
-                    // Read data from the client
-                    String action = in.readLine();
-                    if (action == null) {
-                        System.out.println("Client disconnected!");
-                        return;
-                    }
-
-                    switch (action) {
-                        case "LOGIN":
-                            this.handleLogin(in, out);
-                            break;
-                        case "REGISTER":
-                            username = this.handleRegister(in, out);
-                            break;
-                        default:
-                            out.println("Invalid action");
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    // Close the streams and clientSocket
-                    if(username != null) server.connectedClients.remove(username);
-                    in.close();
-                    out.close();
-                    this.clientSocket.close();
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        public void handleLogin(BufferedReader in, PrintWriter out) throws IOException {
-            String username = in.readLine();
-            String password = in.readLine();
-
-            // Check if the user exists and the password is correct
-            if (server.accounts.containsKey(username) && server.accounts.get(username).getPassword().equals(password)) {
-                out.println("Login successful");
-
-                // Keep the connection open for ongoing communication
-                while (true) {
-                    String clientMessage = in.readLine();
-                    if (clientMessage == null)
-                        return;
-                    switch (clientMessage) {
-                        case "SEND_PROGRAM":
-                            String username_client = in.readLine();
-                            int id = Integer.parseInt(in.readLine());
-                            int memoria = Integer.parseInt(in.readLine());
-                            byte[] file = in.readLine().getBytes();
-                            new Thread(() -> {
-                                try {
-                                    handleSendProgram(in, out, username_client, id, memoria, file);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }).start();
-                            break;
-                        case "SERVER_AVAILABILITY":
-                            new Thread(() -> {
-                                try {
-                                    out.println("SERVER_STATUS");
-                                    out.println(server.max_memory - server.memory_used);
-                                    out.println(server.pendingPrograms.size());
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }).start();
-                            break;
-                        default:
-                            out.println("Invalid action");
-                    }
-                }
-            } else {
-                out.println("Invalid username or password");
-            }
-        }
-
-        public String handleRegister(BufferedReader in, PrintWriter out) throws IOException {
-            String username = in.readLine();
-            String password = in.readLine();
-
-            // Check if the username already exists
-            if (!server.accounts.containsKey(username)) {
-
-                // Register the new user
-                Account newAccount = new Account(username, password);
-                server.accounts.put(username, newAccount);
-                out.println("Registration successful");
-
-                // Store the connected client's PrintWriter
-                server.connectedClients.put(username, out);
-            } else {
-                out.println("Username already exists");
-            }
-
-            return username;
-        }
-
-        public void handleSendProgram(BufferedReader in, PrintWriter out, String username, int id, int memoria, byte[] file) throws IOException{
-            System.out.println("Received request to execute job");
-
-            if (memoria > server.max_memory - server.memory_used){
-                out.println("NOT_AVAILABLE");
-                out.println(id);
-                out.println("Not enough memory available, the job will be executed later.");
-                server.pendingPrograms.offer(new ProgramRequest(username, id, memoria, file));
-                return;
-            }
-            server.memory_used += memoria;
-
-            try{
-                byte[] output = JobFunction.execute(file);
-                System.out.println(Arrays.toString(output));
-
-                out.println("JOB_DONE");
-                out.println(id);
-                out.println(Arrays.toString(output));
-            }catch (JobFunctionException e){
-                out.println("job failed: code="+e.getCode()+" message="+e.getMessage());
-            }
-            server.memory_used -= memoria;
-
-            executePendingPrograms();
-        }
-
-        public void executePendingPrograms() {
-            while (!server.pendingPrograms.isEmpty() && enoughMemoryAvailable(server.pendingPrograms.peek())) {
-                ProgramRequest pendingProgram = server.pendingPrograms.poll();
-                server.memory_used += pendingProgram.getMemory();
-                PrintWriter clientOut = null;
-
-                try {
-                    byte[] output = JobFunction.execute(pendingProgram.getFile());
-                    clientOut = server.connectedClients.get(pendingProgram.getClientUsername());
-
-                    if (clientOut != null) {
-                        clientOut.println("JOB_DONE");
-                        clientOut.println(pendingProgram.getPedido_id());
-                        clientOut.println(Arrays.toString(output));
-                    }
-                } catch (JobFunctionException e) {
-                    clientOut.println("job failed: code="+e.getCode()+" message="+e.getMessage()); // Handle exception as needed
-                }
-
-                server.memory_used -= pendingProgram.getMemory();
-            }
-        }
-
-        public boolean enoughMemoryAvailable(ProgramRequest program) {
-            return program.getMemory() <= (server.max_memory - server.memory_used);
-        }
-    }
-
+public class server {
     private Map<String, Account> accounts;
     private Map<String, PrintWriter> connectedClients;
 
-    private Queue<ProgramRequest> pendingPrograms;
+    private static Queue<ProgramRequest> pendingPrograms;
     private int max_memory;
     private int memory_used;
 
-    public Server(){
+    // Add locks
+    private final Lock accountsLock = new ReentrantLock();
+    private final Lock connectedClientsLock = new ReentrantLock();
+    private final Lock pendingProgramsLock = new ReentrantLock();
+
+    public Server() {
         this.accounts = new HashMap<>();
         this.connectedClients = new HashMap<>();
         this.pendingPrograms = new LinkedList<>();
@@ -202,18 +30,215 @@ public class Server {
         this.memory_used = 0;
     }
 
+    // Other methods...
+
+    // Methods for adding and removing from the structures with locks
+
+    public void addAccount(String username, Account account) {
+        accountsLock.lock();
+        try {
+            this.accounts.put(username, account);
+        } finally {
+            accountsLock.unlock();
+        }
+    }
+
+    public void removeAccount(String username) {
+        accountsLock.lock();
+        try {
+            this.accounts.remove(username);
+        } finally {
+            accountsLock.unlock();
+        }
+    }
+
+    public void addConnectedClient(String username, PrintWriter out) {
+        connectedClientsLock.lock();
+        try {
+            this.connectedClients.put(username, out);
+        } finally {
+            connectedClientsLock.unlock();
+        }
+    }
+
+    public void removeConnectedClient(String username) {
+        connectedClientsLock.lock();
+        try {
+            this.connectedClients.remove(username);
+        } finally {
+            connectedClientsLock.unlock();
+        }
+    }
+
+    public void addPendingProgram(ProgramRequest pr) {
+        pendingProgramsLock.lock();
+        try {
+            this.pendingPrograms.offer(pr);
+        } finally {
+            pendingProgramsLock.unlock();
+        }
+    }
+
+    public void removePendingProgram() {
+        pendingProgramsLock.lock();
+        try {
+            this.pendingPrograms.poll();
+        } finally {
+            pendingProgramsLock.unlock();
+        }
+    }
+
+    public Account getAccount(String username) {
+        accountsLock.lock();
+        try {
+            return this.accounts.get(username);
+        } finally {
+            accountsLock.unlock();
+        }
+    }
+
+    public PrintWriter getConnectedClient(String username) {
+        connectedClientsLock.lock();
+        try {
+            return this.connectedClients.get(username);
+        } finally {
+            connectedClientsLock.unlock();
+        }
+    }
+
+    public ProgramRequest getPendingProgram() {
+        pendingProgramsLock.lock();
+        try {
+            return this.pendingPrograms.peek();
+        } finally {
+            pendingProgramsLock.unlock();
+        }
+    }
+
+    // Methods for confirming an element exists in the structures with locks
+
+    public boolean containsAccount(String username) {
+        accountsLock.lock();
+        try {
+            return this.accounts.containsKey(username);
+        } finally {
+            accountsLock.unlock();
+        }
+    }
+
+    public boolean containsConnectedClient(String username) {
+        connectedClientsLock.lock();
+        try {
+            return this.connectedClients.containsKey(username);
+        } finally {
+            connectedClientsLock.unlock();
+        }
+    }
+
+    // Methods for getting the size of the structures with locks
+
+    public int sizeAccounts() {
+        accountsLock.lock();
+        try {
+            return this.accounts.size();
+        } finally {
+            accountsLock.unlock();
+        }
+    }
+
+    public int sizeConnectedClients() {
+        connectedClientsLock.lock();
+        try {
+            return this.connectedClients.size();
+        } finally {
+            connectedClientsLock.unlock();
+        }
+    }
+
+    public int sizePendingPrograms() {
+        pendingProgramsLock.lock();
+        try {
+            return this.pendingPrograms.size();
+        } finally {
+            pendingProgramsLock.unlock();
+        }
+    }
+
+    // Methods for checking if the structures are empty with locks
+
+    public boolean isEmptyAccounts() {
+        accountsLock.lock();
+        try {
+            return this.accounts.isEmpty();
+        } finally {
+            accountsLock.unlock();
+        }
+    }
+
+    public boolean isEmptyConnectedClients() {
+        connectedClientsLock.lock();
+        try {
+            return this.connectedClients.isEmpty();
+        } finally {
+            connectedClientsLock.unlock();
+        }
+    }
+
+    public boolean isEmptyPendingPrograms() {
+        pendingProgramsLock.lock();
+        try {
+            return this.pendingPrograms.isEmpty();
+        } finally {
+            pendingProgramsLock.unlock();
+        }
+    }
+
+    // Methods for getting the element of the queue (poll) with locks
+
+    public ProgramRequest pollPendingProgram() {
+        pendingProgramsLock.lock();
+        try {
+            return this.pendingPrograms.poll();
+        } finally {
+            pendingProgramsLock.unlock();
+        }
+    }
+
+    // Print of the queue pending programs
+
+    public void printPendingPrograms() {
+        pendingProgramsLock.lock();
+        try {
+            for (ProgramRequest pr : this.pendingPrograms) {
+                System.out.println(pr.getPedido_id() + " " + pr.getMemory() + " " + pr.getClientUsername());
+            }
+        } finally {
+            pendingProgramsLock.unlock();
+        }
+    }
+
+    // main method
+
     public static void main(String[] args) throws InterruptedException{
         int port = 9090; // Choose a port number
         Server server = new Server();
+        Thread t = new Thread(new ProgramHandler(server));
+        t.start();
 
         try {
+
+            // Create a server socket
+
             ServerSocket serverSocket = new ServerSocket(port);
             System.out.println("Server is listening on port " + port);
 
+            // Keep accepting client connections in a while true loop
             while (true) {
+
                 // Wait for a client to connect
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Client connected from " + clientSocket.getInetAddress());
+
 
                 // Handle client connection in a separate thread
                 Thread clientThread = new Thread(new ClientHandler(clientSocket,server));
