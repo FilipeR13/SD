@@ -1,15 +1,18 @@
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import sd23.JobFunction;
+import sd23.JobFunctionException;
+
+import java.io.*;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class server {
+public class Server {
     private Map<String, Account> accounts;
     private Map<String, PrintWriter> connectedClients;
 
@@ -17,12 +20,12 @@ public class server {
     private int max_memory;
     private int memory_used;
 
-    // Add locks
     private final Lock accountsLock = new ReentrantLock();
     private final Lock connectedClientsLock = new ReentrantLock();
     private final Lock pendingProgramsLock = new ReentrantLock();
 
-    public Server() {
+
+    public Server(){
         this.accounts = new HashMap<>();
         this.connectedClients = new HashMap<>();
         this.pendingPrograms = new LinkedList<>();
@@ -30,9 +33,49 @@ public class server {
         this.memory_used = 0;
     }
 
-    // Other methods...
+    // getters and setters
 
-    // Methods for adding and removing from the structures with locks
+    public Map<String, Account> getAccounts() {
+        return accounts;
+    }
+
+    public Map<String, PrintWriter> getConnectedClients() {
+        return connectedClients;
+    }
+
+    public Queue<ProgramRequest> getPendingPrograms() {
+        return pendingPrograms;
+    }
+
+    public int getMax_memory() {
+        return max_memory;
+    }
+
+    public int getMemory_used() {
+        return memory_used;
+    }
+
+    public void setAccounts(Map<String, Account> accounts) {
+        this.accounts = accounts;
+    }
+
+    public void setConnectedClients(Map<String, PrintWriter> connectedClients) {
+        this.connectedClients = connectedClients;
+    }
+
+    public void setPendingPrograms(Queue<ProgramRequest> pendingPrograms) {
+        this.pendingPrograms = pendingPrograms;
+    }
+
+    public void setMax_memory(int max_memory) {
+        this.max_memory = max_memory;
+    }
+
+    public void setMemory_used(int memory_used) {
+        this.memory_used = memory_used;
+    }
+
+    // adds and removes from the structures
 
     public void addAccount(String username, Account account) {
         accountsLock.lock();
@@ -87,6 +130,8 @@ public class server {
             pendingProgramsLock.unlock();
         }
     }
+
+    // get a specific element from the structures
 
     public Account getAccount(String username) {
         accountsLock.lock();

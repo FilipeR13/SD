@@ -18,7 +18,7 @@ public class ClientController {
             this.in = in;
         }
 
-        public void pendingProgram(String id) {
+        public void pendingProgram() {
             try{
                 String message_type = in.readLine();
                 String value = in.readLine();
@@ -53,7 +53,7 @@ public class ClientController {
 
                 if (message_type.equals("NOT_AVAILABLE")) {
                     System.out.println(response);
-                    pendingProgram(value);
+                    pendingProgram();
                 }
 
                 if(message_type.equals("JOB_DONE")){
