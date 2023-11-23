@@ -21,7 +21,7 @@ public class ProgramRequest {
 
     public ProgramRequest(ProgramRequest pr) {
         this.clientUsername = pr.getClientUsername();
-        this.getPedido_id();
+        this.pedido_id = pr.getPedido_id();
         this.memory = pr.getMemory();
         this.file = pr.getFile();
     }

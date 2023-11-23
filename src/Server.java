@@ -15,8 +15,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Server {
     private Map<String, Account> accounts;
     private Map<String, PrintWriter> connectedClients;
+    private static PriorityQueue<ProgramRequest> pendingPrograms;
 
-    private static Queue<ProgramRequest> pendingPrograms;
     private int max_memory;
     private int memory_used;
 
@@ -28,7 +28,7 @@ public class Server {
     public Server(){
         this.accounts = new HashMap<>();
         this.connectedClients = new HashMap<>();
-        this.pendingPrograms = new LinkedList<>();
+        this.pendingPrograms = new PriorityQueue<>(new ProgramRequestComparator());
         this.max_memory = 1000;
         this.memory_used = 0;
     }
@@ -43,7 +43,7 @@ public class Server {
         return connectedClients;
     }
 
-    public Queue<ProgramRequest> getPendingPrograms() {
+    public PriorityQueue<ProgramRequest> getPendingPrograms() {
         return pendingPrograms;
     }
 
@@ -63,9 +63,9 @@ public class Server {
         this.connectedClients = connectedClients;
     }
 
-    public void setPendingPrograms(Queue<ProgramRequest> pendingPrograms) {
-        this.pendingPrograms = pendingPrograms;
-    }
+   public void setPendingPrograms(PriorityQueue<ProgramRequest> pendingPrograms) {
+            this.pendingPrograms = pendingPrograms;
+        }
 
     public void setMax_memory(int max_memory) {
         this.max_memory = max_memory;
