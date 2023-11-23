@@ -13,6 +13,9 @@ public class ProgramExecutor implements Runnable {
         this.server = server;
     }
 
+
+    // erro quando envio varios programas com 1 de memoria no mesmo cliente
+
     public void run() {
         System.out.println("Executing program " + pr.getPedido_id());
         server.setMemory_used(server.getMemory_used() + pr.getMemory());

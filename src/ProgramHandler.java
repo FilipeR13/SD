@@ -17,7 +17,6 @@ public class ProgramHandler implements Runnable {
         System.out.println("Program Handler running");
         while (true) {
             if (!server.isEmptyPendingPrograms() && server.getMemory_used() + server.getPendingPrograms().peek().getMemory() <= server.getMax_memory()) {
-                System.out.println("Estou aqui!");
                 ProgramRequest pr = server.getPendingPrograms().poll();
                 threadPool.execute(new ProgramExecutor(pr, server));
             }

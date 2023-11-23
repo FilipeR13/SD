@@ -70,6 +70,7 @@ public class ClientController {
 
         }
     }
+
     private Account u;
     private Socket socket;
     private BufferedReader in;
@@ -110,10 +111,8 @@ public class ClientController {
         String password = sc.nextLine();
 
         // Send login information to the server
-        out.println("LOGIN");
-        out.println(username);
-        out.println(password);
 
+        LoginMessage.serialize(out, username, password);
 
         // Receive a response from the server
         try {
@@ -141,9 +140,8 @@ public class ClientController {
         this.u.setPassword(password);
 
         // Send registration information to the server without explicit action
-        out.println("REGISTER");
-        out.println(username);
-        out.println(password);
+
+        RegisterMessage.serialize(out, username, password);
 
         // Receive a response from the server
         try {
@@ -173,16 +171,11 @@ public class ClientController {
 
         // Send byte array to the server
 
-        out.println("SEND_PROGRAM");
-        out.println(u.getNomeUtilizador());
-        out.println(this.pedido_id);
-        out.println(memoria);
-        out.println(Arrays.toString(array));
+        SendProgramMessage.serialize(out, u.getNomeUtilizador(), pedido_id, Integer.parseInt(memoria), array);
         this.pedido_id++;
 
         Thread t = new Thread(new ReceiveResponse(in));
         t.start();
-
     }
 
     public void serverAvailability() {
