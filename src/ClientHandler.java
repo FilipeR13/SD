@@ -25,7 +25,7 @@ public class ClientHandler implements Runnable {
         try {
             // Create input and output streams for communication
             in = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
-            out = new PrintWriter(this.clientSocket.getOutputStream(), true);
+            out = new PrintWriter(this.clientSocket.getOutputStream());
 
             // Keep the connection open for ongoing communication
             while (true) {
@@ -45,6 +45,7 @@ public class ClientHandler implements Runnable {
                         break;
                     default:
                         out.println("Invalid action");
+                        out.flush();
                 }
             }
         } catch (IOException e) {
@@ -70,6 +71,7 @@ public class ClientHandler implements Runnable {
         // Check if the user exists and the password is correct
         if (server.containsAccount(username) && server.getAccount(username).getPassword().equals(password)) {
             out.println("Login successful");
+            out.flush();
 
             // Keep the connection open for ongoing communication
             while (true) {
@@ -83,7 +85,6 @@ public class ClientHandler implements Runnable {
                         int memoria = Integer.parseInt(in.readLine());
                         byte[] file = in.readLine().getBytes();
                         server.addPendingProgram(new ProgramRequest(username_client, id, memoria, file));
-                        server.printPendingPrograms();
                         break;
                     case "SERVER_AVAILABILITY":
                         new Thread(() -> {
@@ -91,6 +92,7 @@ public class ClientHandler implements Runnable {
                                 out.println("SERVER_STATUS");
                                 out.println(server.getMax_memory() - server.getMemory_used());
                                 out.println(server.sizePendingPrograms());
+                                out.flush();
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -98,10 +100,12 @@ public class ClientHandler implements Runnable {
                         break;
                     default:
                         out.println("Invalid action");
+                        out.flush();
                 }
             }
         } else {
             out.println("Invalid username or password");
+            out.flush();
         }
     }
 
@@ -116,11 +120,13 @@ public class ClientHandler implements Runnable {
             Account newAccount = new Account(username, password);
             server.addAccount(username,newAccount);
             out.println("Registration successful");
+            out.flush();
 
             // Store the connected client's PrintWriter
             server.addConnectedClient(username, out);
         } else {
             out.println("Username already exists");
+            out.flush();
         }
 
         return username;

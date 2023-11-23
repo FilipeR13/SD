@@ -87,7 +87,7 @@ public class ClientController {
         try {
             socket = new Socket("localhost", 9090);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out = new PrintWriter(socket.getOutputStream(), true);
+            out = new PrintWriter(socket.getOutputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -113,6 +113,7 @@ public class ClientController {
         // Send login information to the server
 
         LoginMessage.serialize(out, username, password);
+        out.flush();
 
         // Receive a response from the server
         try {
@@ -142,6 +143,7 @@ public class ClientController {
         // Send registration information to the server without explicit action
 
         RegisterMessage.serialize(out, username, password);
+        out.flush();
 
         // Receive a response from the server
         try {
@@ -172,6 +174,7 @@ public class ClientController {
         // Send byte array to the server
 
         SendProgramMessage.serialize(out, u.getNomeUtilizador(), pedido_id, Integer.parseInt(memoria), array);
+        out.flush();
         this.pedido_id++;
 
         Thread t = new Thread(new ReceiveResponse(in));
@@ -180,6 +183,7 @@ public class ClientController {
 
     public void serverAvailability() {
         out.println("SERVER_AVAILABILITY");
+        out.flush();
         Thread t = new Thread(new ReceiveResponse(in));
         t.start();
     }

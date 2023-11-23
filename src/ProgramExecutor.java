@@ -13,11 +13,7 @@ public class ProgramExecutor implements Runnable {
         this.server = server;
     }
 
-
-    // erro quando envio varios programas com 1 de memoria no mesmo cliente
-
     public void run() {
-        System.out.println("Executing program " + pr.getPedido_id());
         server.setMemory_used(server.getMemory_used() + pr.getMemory());
         PrintWriter clientOut = null;
 
@@ -29,9 +25,11 @@ public class ProgramExecutor implements Runnable {
                 clientOut.println("JOB_DONE");
                 clientOut.println(pr.getPedido_id());
                 clientOut.println(Arrays.toString(output));
+                clientOut.flush();
+                System.err.println("success, returned "+output.length+" bytes");
             }
         } catch (JobFunctionException e) {
-            e.printStackTrace();  // Handle exception as needed
+            System.err.println("job failed: code="+e.getCode()+" message="+e.getMessage());
         } finally {
             server.setMemory_used(server.getMemory_used() - pr.getMemory());
         }
