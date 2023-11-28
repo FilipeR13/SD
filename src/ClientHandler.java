@@ -84,13 +84,19 @@ public class ClientHandler implements Runnable {
                         int id = Integer.parseInt(in.readLine());
                         int memoria = Integer.parseInt(in.readLine());
                         byte[] file = in.readLine().getBytes();
-                        server.addPendingProgram(new ProgramRequest(username_client, id, memoria, file));
+                        ProgramRequest pr = new ProgramRequest(username_client, id, memoria, file);
+                        server.addPendingProgram(pr);
+                        server.sendProgram(pr);
                         break;
                     case "SERVER_AVAILABILITY":
                         new Thread(() -> {
                             try {
+                                int max_memory_available = 0;
+                                for(Worker w : server.getConnectedWorkers()) {
+                                    if(w.getMemory_available() > max_memory_available) max_memory_available = w.getMemory_available();
+                                }
                                 out.println("SERVER_STATUS");
-                                out.println(server.getMax_memory() - server.getMemory_used());
+                                out.println(max_memory_available);
                                 out.println(server.sizePendingPrograms());
                                 out.flush();
                             } catch (Exception e) {

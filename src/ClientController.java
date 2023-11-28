@@ -67,7 +67,6 @@ public class ClientController {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         }
     }
 

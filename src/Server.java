@@ -1,14 +1,6 @@
-import sd23.JobFunction;
-import sd23.JobFunctionException;
-
 import java.io.*;
 import java.net.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -16,21 +8,21 @@ public class Server {
     private Map<String, Account> accounts;
     private Map<String, PrintWriter> connectedClients;
     private static PriorityQueue<ProgramRequest> pendingPrograms;
+    //Map for the connectedWorkers with an int as a key and then a tuple of ints for data
+    private List<Worker> connectedWorkers;
 
-    private int max_memory;
-    private int memory_used;
 
     private final Lock accountsLock = new ReentrantLock();
     private final Lock connectedClientsLock = new ReentrantLock();
     private final Lock pendingProgramsLock = new ReentrantLock();
+    private final Lock connectedWorkersLock = new ReentrantLock();
 
 
     public Server(){
         this.accounts = new HashMap<>();
         this.connectedClients = new HashMap<>();
         this.pendingPrograms = new PriorityQueue<>(new ProgramRequestComparator());
-        this.max_memory = 1000;
-        this.memory_used = 0;
+        this.connectedWorkers = new ArrayList<>();
     }
 
     // getters and setters
@@ -47,12 +39,8 @@ public class Server {
         return pendingPrograms;
     }
 
-    public int getMax_memory() {
-        return max_memory;
-    }
-
-    public int getMemory_used() {
-        return memory_used;
+    public List<Worker> getConnectedWorkers() {
+        return connectedWorkers;
     }
 
     public void setAccounts(Map<String, Account> accounts) {
@@ -65,14 +53,10 @@ public class Server {
 
    public void setPendingPrograms(PriorityQueue<ProgramRequest> pendingPrograms) {
             this.pendingPrograms = pendingPrograms;
-        }
-
-    public void setMax_memory(int max_memory) {
-        this.max_memory = max_memory;
     }
 
-    public void setMemory_used(int memory_used) {
-        this.memory_used = memory_used;
+    public void setConnectedWorkers(List<Worker> connectedWorkers) {
+        this.connectedWorkers = connectedWorkers;
     }
 
     // adds and removes from the structures
@@ -131,6 +115,29 @@ public class Server {
         }
     }
 
+    public void addConnectedWorker(Worker worker){
+        connectedWorkersLock.lock();
+        try {
+            this.connectedWorkers.add(worker);
+        } finally {
+            connectedWorkersLock.unlock();
+        }
+    }
+
+    public void removeConnectedWorker(int worker_id){
+        connectedWorkersLock.lock();
+        try {
+            for(Worker w : this.connectedWorkers){
+                if(w.getWorker_id() == worker_id){
+                    this.connectedWorkers.remove(w);
+                    break;
+                }
+            }
+        } finally {
+            connectedWorkersLock.unlock();
+        }
+    }
+
     // get a specific element from the structures
 
     public Account getAccount(String username) {
@@ -160,6 +167,20 @@ public class Server {
         }
     }
 
+    public Worker getConnectedWorker(int id) {
+        connectedWorkersLock.lock();
+        try {
+            for (Worker w : this.connectedWorkers) {
+                if (w.getWorker_id() == id) {
+                    return w;
+                }
+            }
+            return null;
+        } finally {
+            connectedWorkersLock.unlock();
+        }
+    }
+
     // Methods for confirming an element exists in the structures with locks
 
     public boolean containsAccount(String username) {
@@ -177,6 +198,20 @@ public class Server {
             return this.connectedClients.containsKey(username);
         } finally {
             connectedClientsLock.unlock();
+        }
+    }
+
+    public boolean containsConnectedWorker(int id) {
+        connectedWorkersLock.lock();
+        try {
+            for (Worker w : this.connectedWorkers) {
+                if (w.getWorker_id() == id) {
+                    return true;
+                }
+            }
+            return false;
+        } finally {
+            connectedWorkersLock.unlock();
         }
     }
 
@@ -209,6 +244,15 @@ public class Server {
         }
     }
 
+    public int sizeConnectedWorkers() {
+        connectedWorkersLock.lock();
+        try {
+            return this.connectedWorkers.size();
+        } finally {
+            connectedWorkersLock.unlock();
+        }
+    }
+
     // Methods for checking if the structures are empty with locks
 
     public boolean isEmptyAccounts() {
@@ -238,6 +282,27 @@ public class Server {
         }
     }
 
+    public boolean isEmptyConnectedWorkers() {
+        connectedWorkersLock.lock();
+        try {
+            return this.connectedWorkers.isEmpty();
+        } finally {
+            connectedWorkersLock.unlock();
+        }
+    }
+    public void changeMemoryWorkerPerId(int worker_id, int memory){
+        connectedWorkersLock.lock();
+        try {
+            for (Worker w : this.connectedWorkers) {
+                if (w.getWorker_id() == worker_id) {
+                    w.setMemory_available(w.getMemory_available() + memory);
+                }
+            }
+        } finally {
+            connectedWorkersLock.unlock();
+        }
+    }
+
     // Methods for getting the element of the queue (poll) with locks
 
     public ProgramRequest pollPendingProgram() {
@@ -262,34 +327,89 @@ public class Server {
         }
     }
 
+    //method used to send a program to the best worker available (with more memory available)
+
+    //menor diferenca positiva (alterar)
+    public void sendProgram(ProgramRequest pr) {
+        System.out.println(this.connectedWorkers);
+        int bestMemoryAvailable = Integer.MIN_VALUE;
+        Worker bestWorker = null;
+        for(Worker w : this.connectedWorkers){
+            if(w.getMemory_available() > bestMemoryAvailable && w.getMemory_available() >= pr.getMemory()){
+                bestMemoryAvailable = w.getMemory_available();
+                bestWorker = w;
+            }
+        }
+        if(bestWorker != null){
+            PrintWriter bestWorkerOut = bestWorker.getOut();
+            bestWorkerOut.println("SEND_PROGRAM");
+            bestWorkerOut.println(pr.getClientUsername());
+            bestWorkerOut.println(pr.getPedido_id());
+            bestWorkerOut.println(pr.getMemory());
+            bestWorkerOut.println(new String(pr.getFile()));
+            bestWorkerOut.flush();
+
+            this.getPendingPrograms().poll();
+            bestWorker.setMemory_available(bestWorker.getMemory_available() - pr.getMemory());
+        }
+    }
+
     // main method
 
     public static void main(String[] args) throws InterruptedException{
-        int port = 9090; // Choose a port number
+        int portClients = 9090;
+        int portWorkers = 9091;
+        int id_worker = 1;
         Server server = new Server();
-        Thread t = new Thread(new ProgramHandler(server));
-        t.start();
 
         try {
+            // Create server sockets
+            ServerSocket serverSocketClients = new ServerSocket(portClients);
+            System.out.println("Server is listening on port " + portClients + " for clients");
 
-            // Create a server socket
+            ServerSocket serverSocketWorkers = new ServerSocket(portWorkers);
+            System.out.println("Server is listening on port " + portWorkers + " for workers");
 
-            ServerSocket serverSocket = new ServerSocket(port);
-            System.out.println("Server is listening on port " + port);
+            // Create separate threads for handling clients and workers
+            Thread clientAcceptThread = new Thread(() -> acceptClients(serverSocketClients, server));
+            Thread workerAcceptThread = new Thread(() -> acceptWorkers(serverSocketWorkers, server, id_worker));
 
-            // Keep accepting client connections in a while true loop
+            // Start the threads
+            clientAcceptThread.start();
+            workerAcceptThread.start();
+
+            // Wait for threads to finish
+            clientAcceptThread.join();
+            workerAcceptThread.join();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void acceptClients(ServerSocket serverSocket, Server server) {
+        try {
             while (true) {
-
-                // Wait for a client to connect
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Client connected from " + clientSocket.getInetAddress());
-
-
-                // Handle client connection in a separate thread
-                Thread clientThread = new Thread(new ClientHandler(clientSocket,server));
+                Thread clientThread = new Thread(new ClientHandler(clientSocket, server));
                 clientThread.start();
             }
-        } catch (IOException e){
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void acceptWorkers(ServerSocket serverSocket, Server server, int id_worker) {
+        try {
+            while (true) {
+                Socket workerSocket = serverSocket.accept();
+                System.out.println("Worker connected from " + workerSocket.getInetAddress());
+                Thread workerThread = new Thread(new WorkerHandler(id_worker, workerSocket, server));
+                workerThread.start();
+                id_worker++;
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

@@ -6,30 +6,35 @@ import java.util.Arrays;
 
 public class ProgramExecutor implements Runnable {
     private ProgramRequest pr;
-    private Server server;
+    private WorkerServer server;
+    private PrintWriter out;
 
-    public ProgramExecutor(ProgramRequest pr, Server server) {
+    public ProgramExecutor(ProgramRequest pr, WorkerServer server, PrintWriter out) {
         this.pr = pr;
         this.server = server;
+        this.out = out;
     }
 
     public void run() {
+        PrintWriter serverOut = null;
+
+        //set the memory used by the worker
+
         server.setMemory_used(server.getMemory_used() + pr.getMemory());
-        PrintWriter clientOut = null;
 
         try {
             byte[] output = JobFunction.execute(pr.getFile());
-            clientOut = server.getConnectedClient(pr.getClientUsername());
-
-            if (clientOut != null) {
-                clientOut.println("JOB_DONE");
-                clientOut.println(pr.getPedido_id());
-                clientOut.println(Arrays.toString(output));
-                clientOut.flush();
-                System.err.println("success, returned "+output.length+" bytes");
+            if (out != null) {
+                out.println("JOB_DONE");
+                out.println(pr.getClientUsername());
+                out.println(server.getMemory_used());
+                out.println(pr.getPedido_id());
+                out.println(Arrays.toString(output));
+                out.flush();
+                System.err.println("success, returned " + output.length + " bytes");
             }
         } catch (JobFunctionException e) {
-            System.err.println("job failed: code="+e.getCode()+" message="+e.getMessage());
+            System.err.println("job failed: code=" + e.getCode() + " message=" + e.getMessage());
         } finally {
             server.setMemory_used(server.getMemory_used() - pr.getMemory());
         }
