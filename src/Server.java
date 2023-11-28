@@ -329,28 +329,36 @@ public class Server {
 
     //method used to send a program to the best worker available (with more memory available)
 
-    //menor diferenca positiva (alterar)
     public void sendProgram(ProgramRequest pr) {
-        System.out.println(this.connectedWorkers);
-        int bestMemoryAvailable = Integer.MIN_VALUE;
-        Worker bestWorker = null;
-        for(Worker w : this.connectedWorkers){
-            if(w.getMemory_available() > bestMemoryAvailable && w.getMemory_available() >= pr.getMemory()){
-                bestMemoryAvailable = w.getMemory_available();
-                bestWorker = w;
-            }
-        }
-        if(bestWorker != null){
-            PrintWriter bestWorkerOut = bestWorker.getOut();
-            bestWorkerOut.println("SEND_PROGRAM");
-            bestWorkerOut.println(pr.getClientUsername());
-            bestWorkerOut.println(pr.getPedido_id());
-            bestWorkerOut.println(pr.getMemory());
-            bestWorkerOut.println(new String(pr.getFile()));
-            bestWorkerOut.flush();
 
-            this.getPendingPrograms().poll();
-            bestWorker.setMemory_available(bestWorker.getMemory_available() - pr.getMemory());
+        while (true) {
+            int bestMemoryAvailable = Integer.MIN_VALUE;
+            Worker bestWorker = null;
+
+            // Check available memory in connected workers
+            for (Worker w : this.connectedWorkers) {
+                if (w.getMemory_available() > bestMemoryAvailable && w.getMemory_available() >= pr.getMemory()) {
+                    bestMemoryAvailable = w.getMemory_available();
+                    bestWorker = w;
+                }
+            }
+
+            if (bestWorker != null) {
+                // Found a worker with enough memory, send the program
+                PrintWriter bestWorkerOut = bestWorker.getOut();
+                bestWorkerOut.println("SEND_PROGRAM");
+                bestWorkerOut.println(pr.getClientUsername());
+                bestWorkerOut.println(pr.getPedido_id());
+                bestWorkerOut.println(pr.getMemory());
+                bestWorkerOut.println(new String(pr.getFile()));
+                bestWorkerOut.flush();
+
+                this.getPendingPrograms().poll();
+                bestWorker.setMemory_available(bestWorker.getMemory_available() - pr.getMemory());
+
+                // Exit the loop since the program has been sent
+                break;
+            }
         }
     }
 
