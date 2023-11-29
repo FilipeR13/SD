@@ -86,7 +86,7 @@ public class ClientHandler implements Runnable {
                         byte[] file = in.readLine().getBytes();
                         ProgramRequest pr = new ProgramRequest(username_client, id, memoria, file);
                         server.addPendingProgram(pr);
-                        server.sendProgram(pr);
+                        new Thread(() -> server.sendProgram(pr)).start();
                         break;
                     case "SERVER_AVAILABILITY":
                         new Thread(() -> {

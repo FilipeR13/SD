@@ -12,27 +12,27 @@ import java.util.Stack;
 public class ClientController {
 
     private static class ReceiveResponse implements Runnable{
+        private Account u;
         private BufferedReader in;
 
-        public ReceiveResponse(BufferedReader in){
+        public ReceiveResponse(Account u, BufferedReader in){
+            this.u = u;
             this.in = in;
         }
 
-        public void pendingProgram() {
-            try{
-                String message_type = in.readLine();
-                String value = in.readLine();
-                String response = in.readLine();
+        public void sendToFile(String username, String result, String id){
+            try {
+                //create file if it doesn't exist
 
-                if(!message_type.equals("JOB_DONE")){
-                    return;
-                }
-                getResult(response, value);
-
+                File file = new File("/home/jojocoelho/Desktop/Projetos/SD/src/resultados",username + ".txt");
+                FileWriter writer = new FileWriter(file, true);
+                writer.write(id + ": " + result + "\n");
+                writer.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+
 
         public void getResult(String response, String id){
             Object[] result = Arrays.stream(response.substring(1, response.length() - 1).split(", ")).map(Byte::parseByte).toArray();
@@ -42,6 +42,8 @@ public class ClientController {
             }
             String result_string = Arrays.toString(to_byte);
             System.out.println("Server response: " + id + " " + result_string);
+
+            sendToFile(u.getNomeUtilizador(),result_string, id);
         }
 
         public void run(){
@@ -50,11 +52,6 @@ public class ClientController {
                 String message_type = in.readLine();
                 String value = in.readLine();
                 String response = in.readLine();
-
-                if (message_type.equals("NOT_AVAILABLE")) {
-                    System.out.println(response);
-                    pendingProgram();
-                }
 
                 if(message_type.equals("JOB_DONE")){
                     getResult(response, value);
@@ -101,6 +98,11 @@ public class ClientController {
         } catch (SocketException e) {
             e.printStackTrace();
         }
+
+        //erase client results file from the folder "resultados"
+
+        File file = new File("/home/jojocoelho/Desktop/Projetos/SD/src/resultados",u.getNomeUtilizador() + ".txt");
+        file.delete();
     }
 
     public void login() {
@@ -176,14 +178,14 @@ public class ClientController {
         out.flush();
         this.pedido_id++;
 
-        Thread t = new Thread(new ReceiveResponse(in));
+        Thread t = new Thread(new ReceiveResponse(this.u,in));
         t.start();
     }
 
     public void serverAvailability() {
         out.println("SERVER_AVAILABILITY");
         out.flush();
-        Thread t = new Thread(new ReceiveResponse(in));
+        Thread t = new Thread(new ReceiveResponse(this.u,in));
         t.start();
     }
 }

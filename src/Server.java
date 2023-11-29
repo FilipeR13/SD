@@ -329,6 +329,9 @@ public class Server {
 
     //method used to send a program to the best worker available (with more memory available)
 
+    //when there isnt enough memory available and there is a program waiting to be executed and I send a server status, the server status is only sent after there is memory available,
+    // the code is getting stuck inside a while(true) and does not send the server status back to the client
+
     public void sendProgram(ProgramRequest pr) {
 
         while (true) {
