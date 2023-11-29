@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
 
 public class WorkerHandler implements Runnable {
@@ -51,17 +48,17 @@ public class WorkerHandler implements Runnable {
     }
 
     public void run() {
-        BufferedReader in = null;
-        PrintWriter out = null;
+        DataInputStream in = null;
+        DataOutputStream out = null;
         try {
             // Create input and output streams for communication
-            in = new BufferedReader(new InputStreamReader(this.workerSocket.getInputStream()));
-            out = new PrintWriter(this.workerSocket.getOutputStream());
+            in = new DataInputStream(this.workerSocket.getInputStream());
+            out = new DataOutputStream(this.workerSocket.getOutputStream());
 
             // Keep the connection open for ongoing communication
             while (true) {
                 // Read data from the client
-                String action = in.readLine();
+                String action = in.readUTF();
                 if (action == null) {
                     System.out.println("Worker disconnected!");
                     return;
@@ -75,7 +72,7 @@ public class WorkerHandler implements Runnable {
                         this.handleJobDone(action,in,this.worker_id);
                         break;
                     default:
-                        out.println("Invalid action");
+                        out.writeUTF("Invalid action");
                         out.flush();
                 }
             }
@@ -95,27 +92,25 @@ public class WorkerHandler implements Runnable {
         }
     }
 
-    public void handleJobDone(String action, BufferedReader in, int worker_id) throws IOException {
-        String username = in.readLine();
-        int memory = Integer.parseInt(in.readLine());
-        int pedido_id = Integer.parseInt(in.readLine());
-        String result_string = in.readLine();
+    public void handleJobDone(String action, DataInputStream in, int worker_id) throws IOException {
+        String username = in.readUTF();
+        int memory = in.readInt();
+        int pedido_id = in.readInt();
+        String result_string = in.readUTF();
 
         server.changeMemoryWorkerPerId(worker_id,memory);
 
-        // get from the connected clients map the Printwriter of the client that has the username given as key
+        DataOutputStream clientOut = server.getConnectedClients().get(username);
 
-        PrintWriter clientOut = server.getConnectedClients().get(username);
-
-        clientOut.println(action);
-        clientOut.println(pedido_id);
-        clientOut.println(result_string);
+        clientOut.writeUTF(action);
+        clientOut.writeUTF(String.valueOf(pedido_id));
+        clientOut.writeUTF(result_string);
         clientOut.flush();
     }
 
-    public void handleMemoryInfo(BufferedReader in, PrintWriter out) throws IOException {
-        int max_memory = Integer.parseInt(in.readLine());
-        int memory_used = Integer.parseInt(in.readLine());
+    public void handleMemoryInfo(DataInputStream in, DataOutputStream out) throws IOException {
+        int max_memory = in.readInt();
+        int memory_used = in.readInt();
 
         server.addConnectedWorker(new Worker(this.worker_id, out, max_memory - memory_used));
     }

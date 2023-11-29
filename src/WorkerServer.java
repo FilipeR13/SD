@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -46,10 +43,10 @@ public class WorkerServer {
     private static final String SERVER_IP = "localhost";  // Replace with your Main Server's IP address
     private static final int SERVER_PORT = 9091;  // Replace with your Main Server's port
 
-    public void sendMemoryInfo(PrintWriter out) {
-        out.println("MEMORY_INFO");
-        out.println(this.max_memory);
-        out.println(this.memory_used);
+    public void sendMemoryInfo(DataOutputStream out) throws IOException {
+        out.writeUTF("MEMORY_INFO");
+        out.writeInt(this.max_memory);
+        out.writeInt(this.memory_used);
         out.flush();
     }
 
@@ -61,29 +58,28 @@ public class WorkerServer {
             System.out.println("Connected to Main Server: " + workerSocket.getInetAddress().getHostAddress());
 
             // Set up input and output streams
-            BufferedReader in = new BufferedReader(new InputStreamReader(workerSocket.getInputStream()));
-            PrintWriter out = new PrintWriter(workerSocket.getOutputStream());
-
+            DataInputStream in = new DataInputStream(workerSocket.getInputStream());
+            DataOutputStream out = new DataOutputStream(workerSocket.getOutputStream());
             workerServer.sendMemoryInfo(out);
 
             while (true) {
                 // Read data from the server
-                String action = in.readLine();
+                String action = in.readUTF();
                 if (action == null) {
                     System.out.println("Server disconnected!");
                     return;
                 }
                 if(action.equals("SEND_PROGRAM")) {
-                    String username_client = in.readLine();
-                    int id = Integer.parseInt(in.readLine());
-                    int memoria = Integer.parseInt(in.readLine());
-                    byte[] file = in.readLine().getBytes();
-                    ProgramRequest pr = new ProgramRequest(username_client, id, memoria, file);
+                    String username_client = in.readUTF();
+                    int id = in.readInt();
+                    int memoria = in.readInt();
+                    String file = in.readUTF();
+                    ProgramRequest pr = new ProgramRequest(username_client, id, memoria, file.getBytes());
                     Thread t = new Thread(new ProgramExecutor(pr, workerServer,out));
                     t.start();
                 }
                 else {
-                    out.println("Invalid action");
+                    out.writeUTF("Invalid action");
                     out.flush();
                 }
             }

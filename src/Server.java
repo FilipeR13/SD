@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Server {
     private Map<String, Account> accounts;
-    private Map<String, PrintWriter> connectedClients;
+    private Map<String, DataOutputStream> connectedClients;
     private static PriorityQueue<ProgramRequest> pendingPrograms;
     //Map for the connectedWorkers with an int as a key and then a tuple of ints for data
     private List<Worker> connectedWorkers;
@@ -31,7 +31,7 @@ public class Server {
         return accounts;
     }
 
-    public Map<String, PrintWriter> getConnectedClients() {
+    public Map<String, DataOutputStream> getConnectedClients() {
         return connectedClients;
     }
 
@@ -47,7 +47,7 @@ public class Server {
         this.accounts = accounts;
     }
 
-    public void setConnectedClients(Map<String, PrintWriter> connectedClients) {
+    public void setConnectedClients(Map<String, DataOutputStream> connectedClients) {
         this.connectedClients = connectedClients;
     }
 
@@ -79,7 +79,7 @@ public class Server {
         }
     }
 
-    public void addConnectedClient(String username, PrintWriter out) {
+    public void addConnectedClient(String username, DataOutputStream out) {
         connectedClientsLock.lock();
         try {
             this.connectedClients.put(username, out);
@@ -149,7 +149,7 @@ public class Server {
         }
     }
 
-    public PrintWriter getConnectedClient(String username) {
+    public DataOutputStream getConnectedClient(String username) {
         connectedClientsLock.lock();
         try {
             return this.connectedClients.get(username);
@@ -332,7 +332,7 @@ public class Server {
     //when there isnt enough memory available and there is a program waiting to be executed and I send a server status, the server status is only sent after there is memory available,
     // the code is getting stuck inside a while(true) and does not send the server status back to the client
 
-    public void sendProgram(ProgramRequest pr) {
+    public void sendProgram(ProgramRequest pr) throws IOException {
 
         while (true) {
             int bestMemoryAvailable = Integer.MIN_VALUE;
@@ -348,12 +348,12 @@ public class Server {
 
             if (bestWorker != null) {
                 // Found a worker with enough memory, send the program
-                PrintWriter bestWorkerOut = bestWorker.getOut();
-                bestWorkerOut.println("SEND_PROGRAM");
-                bestWorkerOut.println(pr.getClientUsername());
-                bestWorkerOut.println(pr.getPedido_id());
-                bestWorkerOut.println(pr.getMemory());
-                bestWorkerOut.println(new String(pr.getFile()));
+                DataOutputStream bestWorkerOut = bestWorker.getOut();
+                bestWorkerOut.writeUTF("SEND_PROGRAM");
+                bestWorkerOut.writeUTF(pr.getClientUsername());
+                bestWorkerOut.writeInt(pr.getPedido_id());
+                bestWorkerOut.writeInt(pr.getMemory());
+                bestWorkerOut.writeUTF(new String(pr.getFile()));
                 bestWorkerOut.flush();
 
                 this.getPendingPrograms().poll();

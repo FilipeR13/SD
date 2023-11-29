@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Arrays;
 
 public class SendProgramMessage {
@@ -8,11 +9,11 @@ public class SendProgramMessage {
     private String nome_utilizador;
     private int pedido_id;
     private int memoria;
-    private byte[] programa;
+    private String programa;
 
     // Constructor and other methods...
 
-    public SendProgramMessage(String nome_utilizador, int pedido_id, int memoria, byte[] programa) {
+    public SendProgramMessage(String nome_utilizador, int pedido_id, int memoria, String programa) {
         this.nome_utilizador = nome_utilizador;
         this.pedido_id = pedido_id;
         this.memoria = memoria;
@@ -31,39 +32,39 @@ public class SendProgramMessage {
         return this.memoria;
     }
 
-    public byte[] getPrograma() {
+    public String getPrograma() {
         return this.programa;
     }
 
-    public void setNome_utilizador(){
+    public void setNome_utilizador(String nome_utilizador){
         this.nome_utilizador = nome_utilizador;
     }
 
-    public void setPedido_id(){
+    public void setPedido_id(int pedido_id){
         this.pedido_id = pedido_id;
     }
 
-    public void setMemoria(){
+    public void setMemoria(int memoria){
         this.memoria = memoria;
     }
 
-    public void setPrograma(){
+    public void setPrograma(String programa){
         this.programa = programa;
     }
 
-    public static void serialize(PrintWriter out, String nome_utilizador, int pedido_id, int memoria, byte[] programa) {
-        out.println("SEND_PROGRAM");
-        out.println(nome_utilizador);
-        out.println(pedido_id);
-        out.println(memoria);
-        out.println(Arrays.toString(programa));
+    public static void serialize(DataOutputStream out, String nome_utilizador, int pedido_id, int memoria, String programa) throws IOException {
+        out.writeUTF("SEND_PROGRAM");
+        out.writeUTF(nome_utilizador);
+        out.writeInt(pedido_id);
+        out.writeInt(memoria);
+        out.writeUTF(programa);
     }
 
-    public static SendProgramMessage deserialize(BufferedReader in) throws IOException {
-        String nome_utilizador = in.readLine();
-        int pedido_id = Integer.parseInt(in.readLine());
-        int memoria = Integer.parseInt(in.readLine());
-        byte[] programa = in.readLine().getBytes();
+    public static SendProgramMessage deserialize(DataInputStream in) throws IOException {
+        String nome_utilizador = in.readUTF();
+        int pedido_id = in.readInt();
+        int memoria = in.readInt();
+        String programa = in.readUTF();
         return new SendProgramMessage(nome_utilizador, pedido_id, memoria, programa);
     }
 }

@@ -56,6 +56,4 @@ public class ProgramRequest {
     public void setFile(byte[] file) {
         this.file = file;
     }
-
-
 }
