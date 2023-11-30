@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.concurrent.locks.Lock;
 
 public class ProgramExecutor implements Runnable {
     private ProgramRequest pr;
@@ -18,20 +19,13 @@ public class ProgramExecutor implements Runnable {
     }
 
     public void run() {
-        PrintWriter serverOut = null;
-
         //set the memory used by the worker
-
         server.setMemory_used(server.getMemory_used() + pr.getMemory());
 
         try {
             byte[] output = JobFunction.execute(pr.getFile());
             if (out != null) {
-                out.writeUTF("JOB_DONE");
-                out.writeUTF(pr.getClientUsername());
-                out.writeInt(server.getMemory_used());
-                out.writeInt(pr.getPedido_id());
-                out.writeUTF(Arrays.toString(output));
+                JobDoneMessage.serialize(out, pr.getClientUsername(), pr.getMemory(), pr.getPedido_id(), Arrays.toString(output));
                 out.flush();
                 System.err.println("success, returned " + output.length + " bytes");
             }

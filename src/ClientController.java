@@ -4,14 +4,18 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Arrays;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ClientController {
 
     private static class ReceiveResponse implements Runnable{
+        private Lock l;
         private Account u;
         private DataInputStream in;
 
-        public ReceiveResponse(Account u, DataInputStream in){
+        public ReceiveResponse(Lock l, Account u, DataInputStream in){
+            this.l = l;
             this.u = u;
             this.in = in;
         }
@@ -42,23 +46,29 @@ public class ClientController {
             sendToFile(u.getNomeUtilizador(),result_string, id);
         }
 
-        public void run(){
+        public void run() {
+            l.lock();
             try {
 
-                String message_type = in.readUTF();
-                String value = in.readUTF();
-                String response = in.readUTF();
+                try {
 
-                if(message_type.equals("JOB_DONE")){
-                    getResult(response, value);
+                    String message_type = in.readUTF();
+
+                    if (message_type.equals("JOB_DONE")) {
+                        JobDoneMessage jobDoneMessage = JobDoneMessage.deserialize(in);
+                        getResult(jobDoneMessage.getResult(), Integer.toString(jobDoneMessage.getPedido_id()));
+                    }
+
+                    if (message_type.equals("SERVER_STATUS")) {
+                        ServerStatusMessage serverStatusMessage = ServerStatusMessage.deserialize(in);
+                        System.out.println("The server has " + serverStatusMessage.getMemory_available() + " MB of memory left and there are currently " + serverStatusMessage.getNumber_programs() + " jobs waiting to be executed!");
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-
-                if(message_type.equals("SERVER_STATUS")){
-                    System.out.println("The server has " + value + " MB of memory left and there are currently " + response + " jobs waiting to be executed!");
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
+            } finally {
+                l.unlock();
             }
         }
     }
@@ -68,8 +78,8 @@ public class ClientController {
     private DataInputStream in;
     private DataOutputStream out;
     private BufferedReader stdin;
-
     private int pedido_id = 1;
+    private Lock l = new ReentrantLock();
 
     public ClientController(Account u) {
         this.u = u;
@@ -175,14 +185,14 @@ public class ClientController {
         out.flush();
         this.pedido_id++;
 
-        Thread t = new Thread(new ReceiveResponse(this.u,in));
+        Thread t = new Thread(new ReceiveResponse(l,this.u,in));
         t.start();
     }
 
     public void serverAvailability() throws IOException {
         out.writeUTF("SERVER_AVAILABILITY");
         out.flush();
-        Thread t = new Thread(new ReceiveResponse(this.u,in));
+        Thread t = new Thread(new ReceiveResponse(l,this.u,in));
         t.start();
     }
 }

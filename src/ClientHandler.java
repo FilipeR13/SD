@@ -89,9 +89,7 @@ public class ClientHandler implements Runnable {
                                 for(Worker w : server.getConnectedWorkers()) {
                                     if(w.getMemory_available() > max_memory_available) max_memory_available = w.getMemory_available();
                                 }
-                                out.writeUTF("SERVER_STATUS");
-                                out.writeUTF(String.valueOf(max_memory_available));
-                                out.writeUTF(String.valueOf(server.sizePendingPrograms()));
+                                ServerStatusMessage.serialize(out, max_memory_available, server.sizePendingPrograms());
                                 out.flush();
                             } catch (Exception e) {
                                 e.printStackTrace();

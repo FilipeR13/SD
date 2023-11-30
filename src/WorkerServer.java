@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.concurrent.locks.Lock;
 
 public class WorkerServer {
 
@@ -44,9 +45,7 @@ public class WorkerServer {
     private static final int SERVER_PORT = 9091;  // Replace with your Main Server's port
 
     public void sendMemoryInfo(DataOutputStream out) throws IOException {
-        out.writeUTF("MEMORY_INFO");
-        out.writeInt(this.max_memory);
-        out.writeInt(this.memory_used);
+        MemoryInfoMessage.serialize(out, this.max_memory, this.memory_used);
         out.flush();
     }
 
@@ -70,11 +69,8 @@ public class WorkerServer {
                     return;
                 }
                 if(action.equals("SEND_PROGRAM")) {
-                    String username_client = in.readUTF();
-                    int id = in.readInt();
-                    int memoria = in.readInt();
-                    String file = in.readUTF();
-                    ProgramRequest pr = new ProgramRequest(username_client, id, memoria, file.getBytes());
+                    SendProgramMessage spm = SendProgramMessage.deserialize(in);
+                    ProgramRequest pr = new ProgramRequest(spm.getNome_utilizador(), spm.getPedido_id(), spm.getMemoria(), spm.getPrograma().getBytes());
                     Thread t = new Thread(new ProgramExecutor(pr, workerServer,out));
                     t.start();
                 }

@@ -63,7 +63,6 @@ public class WorkerHandler implements Runnable {
                     System.out.println("Worker disconnected!");
                     return;
                 }
-
                 switch (action) {
                     case "MEMORY_INFO":
                         this.handleMemoryInfo(in,out);
@@ -93,26 +92,18 @@ public class WorkerHandler implements Runnable {
     }
 
     public void handleJobDone(String action, DataInputStream in, int worker_id) throws IOException {
-        String username = in.readUTF();
-        int memory = in.readInt();
-        int pedido_id = in.readInt();
-        String result_string = in.readUTF();
+        JobDoneMessage jobDoneMessage = JobDoneMessage.deserialize(in);
 
-        server.changeMemoryWorkerPerId(worker_id,memory);
+        server.changeMemoryWorkerPerId(worker_id,jobDoneMessage.getMemory_used());
+        DataOutputStream clientOut = server.getConnectedClients().get(jobDoneMessage.getNome_utilizador());
 
-        DataOutputStream clientOut = server.getConnectedClients().get(username);
-
-        clientOut.writeUTF(action);
-        clientOut.writeUTF(String.valueOf(pedido_id));
-        clientOut.writeUTF(result_string);
-        clientOut.flush();
+        JobDoneMessage.serialize(clientOut,jobDoneMessage.getNome_utilizador(),jobDoneMessage.getMemory_used(),jobDoneMessage.getPedido_id(),jobDoneMessage.getResult());
     }
 
     public void handleMemoryInfo(DataInputStream in, DataOutputStream out) throws IOException {
-        int max_memory = in.readInt();
-        int memory_used = in.readInt();
+        MemoryInfoMessage memoryInfoMessage = MemoryInfoMessage.deserialize(in);
 
-        server.addConnectedWorker(new Worker(this.worker_id, out, max_memory - memory_used));
+        server.addConnectedWorker(new Worker(this.worker_id, out, memoryInfoMessage.getMax_memory() - memoryInfoMessage.getMemory_used()));
     }
 }
 
