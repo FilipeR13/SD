@@ -93,7 +93,7 @@ public class ClientController {
 
     public static String getAbsolutePath(){
         String currentWorkingDirectory = System.getProperty("user.dir");
-        return currentWorkingDirectory + "/resultados";
+        return currentWorkingDirectory + "/src/resultados";
     }
 
     public void establishConnection() {

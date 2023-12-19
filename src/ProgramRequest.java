@@ -3,12 +3,14 @@ public class ProgramRequest {
     private int memory;
     private byte[] file;
     private int pedido_id;
+    private int priority;
 
     public ProgramRequest(){
         this.clientUsername = "";
         this.pedido_id = 0;
         this.memory = 0;
         this.file = new byte[0];
+        this.priority = 0;
     }
 
     public ProgramRequest(String []arguments) {
@@ -16,6 +18,8 @@ public class ProgramRequest {
         this.pedido_id = Integer.parseInt(arguments[1]);
         this.memory = Integer.parseInt(arguments[2]);
         this.file = arguments[3].getBytes();
+        //formula that calculates the priority based on the memory and the size of the file
+        this.priority = this.memory + this.file.length;
     }
 
     public ProgramRequest(ProgramRequest pr) {
@@ -23,6 +27,7 @@ public class ProgramRequest {
         this.pedido_id = pr.getPedido_id();
         this.memory = pr.getMemory();
         this.file = pr.getFile();
+        this.priority = pr.getPriority();
     }
 
     public String getClientUsername() {
@@ -41,6 +46,10 @@ public class ProgramRequest {
         return file;
     }
 
+    public int getPriority() {
+        return priority;
+    }
+
     public void setClientUsername(String clientUsername) {
         this.clientUsername = clientUsername;
     }
@@ -55,5 +64,9 @@ public class ProgramRequest {
 
     public void setFile(byte[] file) {
         this.file = file;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
     }
 }
