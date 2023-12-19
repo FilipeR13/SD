@@ -3,8 +3,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Message {
-    String type;
-    String payload;
+    private String type;
+    private String payload;
 
     // Constructor
 
