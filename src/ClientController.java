@@ -23,8 +23,7 @@ public class ClientController {
         public void sendToFile(String username, String result, String id){
             try {
                 //create file if it doesn't exist
-
-                File file = new File("/home/jojocoelho/Desktop/Projetos/SD/src/resultados",username + ".txt");
+                File file = new File(getAbsolutePath(),username + ".txt");
                 FileWriter writer = new FileWriter(file, true);
                 writer.write(id + ": " + result + "\n");
                 writer.close();
@@ -92,6 +91,11 @@ public class ClientController {
         this.u = u;
     }
 
+    public static String getAbsolutePath(){
+        String currentWorkingDirectory = System.getProperty("user.dir");
+        return currentWorkingDirectory + "/resultados";
+    }
+
     public void establishConnection() {
         try {
             socket = new Socket("localhost", 9090);
@@ -115,7 +119,7 @@ public class ClientController {
 
         //erase client results file from the folder "resultados"
 
-        File file = new File("/home/jojocoelho/Desktop/Projetos/SD/src/resultados",u.getNomeUtilizador() + ".txt");
+        File file = new File(getAbsolutePath(),u.getNomeUtilizador() + ".txt");
         file.delete();
     }
 

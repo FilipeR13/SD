@@ -6,6 +6,7 @@ public class Account {
         this.nomeUtilizador = "";
         this.password = "";
     }
+
     public Account(String nomeUtilizador, String password) {
         this.nomeUtilizador = nomeUtilizador;
         this.password = password;
