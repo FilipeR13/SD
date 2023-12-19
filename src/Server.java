@@ -349,12 +349,11 @@ public class Server {
             if (bestWorker != null) {
                 // Found a worker with enough memory, send the program
                 DataOutputStream bestWorkerOut = bestWorker.getOut();
-                SendProgramMessage.serialize(bestWorkerOut, pr.getClientUsername(), pr.getPedido_id(), pr.getMemory(), new String(pr.getFile()));
+                Message.serialize(bestWorkerOut,"SEND_PROGRAM",pr.getClientUsername() + ";" + pr.getPedido_id() + ";" + pr.getMemory() + ";" + new String(pr.getFile()));
                 bestWorkerOut.flush();
 
                 this.getPendingPrograms().poll();
                 bestWorker.setMemory_available(bestWorker.getMemory_available() - pr.getMemory());
-
                 // Exit the loop since the program has been sent
                 break;
             }

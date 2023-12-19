@@ -11,11 +11,11 @@ public class ProgramRequest {
         this.file = new byte[0];
     }
 
-    public ProgramRequest(String clientUsername, int pedido_id, int memory, byte[] file) {
-        this.clientUsername = clientUsername;
-        this.pedido_id = pedido_id;
-        this.memory = memory;
-        this.file = file;
+    public ProgramRequest(String []arguments) {
+        this.clientUsername = arguments[0];
+        this.pedido_id = Integer.parseInt(arguments[1]);
+        this.memory = Integer.parseInt(arguments[2]);
+        this.file = arguments[3].getBytes();
     }
 
     public ProgramRequest(ProgramRequest pr) {

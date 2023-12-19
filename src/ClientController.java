@@ -52,16 +52,23 @@ public class ClientController {
 
                 try {
 
-                    String message_type = in.readUTF();
+                    Message serverMessage = Message.deserialize(in);
+                    String arguments[] = Message.parsePayload(serverMessage.getPayload());
 
-                    if (message_type.equals("JOB_DONE")) {
-                        JobDoneMessage jobDoneMessage = JobDoneMessage.deserialize(in);
-                        getResult(jobDoneMessage.getResult(), Integer.toString(jobDoneMessage.getPedido_id()));
-                    }
+                    // do a switch case intead
 
-                    if (message_type.equals("SERVER_STATUS")) {
-                        ServerStatusMessage serverStatusMessage = ServerStatusMessage.deserialize(in);
-                        System.out.println("The server has " + serverStatusMessage.getMemory_available() + " MB of memory left and there are currently " + serverStatusMessage.getNumber_programs() + " jobs waiting to be executed!");
+                    switch (serverMessage.getType()) {
+                        case "JOB_DONE":
+                            getResult(arguments[3],arguments[2]);
+                            break;
+                        case "SERVER_STATUS":
+                            System.out.println("The server has " + arguments[0] + " MB of memory left and there are currently " + arguments[1] + " jobs waiting to be executed!");
+                            break;
+                        case "JOB_FAILED":
+                            System.out.println("Job " + arguments[2] + " failed: code=" + arguments[3] + " message=" + arguments[4]);
+                            break;
+                        default:
+                            System.out.println("Server response: " + serverMessage.getType());
                     }
 
                 } catch (IOException e) {
@@ -113,14 +120,15 @@ public class ClientController {
     }
 
     public void login() throws IOException {
+        String[] credentials = new String[2];
         System.out.print("Nome de Utilizador :: ");
-        String username = stdin.readLine();
+        credentials[0] = stdin.readLine();
         System.out.print("Palavra-Passe:: ");
-        String password = stdin.readLine();
+        credentials[1] = stdin.readLine();
 
         // Send login information to the server
-
-        LoginMessage.serialize(out, username, password);
+        String payload = Message.createPayload(credentials);
+        Message.serialize(out,"LOGIN", payload);
         out.flush();
 
         // Receive a response from the server
@@ -141,16 +149,17 @@ public class ClientController {
     }
 
     public void register() throws IOException {
+        String[] credentials = new String[2];
         System.out.print("Nome de Utilizador :: ");
-        String username = stdin.readLine();
-        this.u.setNomeUtilizador(username);
+        credentials[0] = stdin.readLine();
+        this.u.setNomeUtilizador(credentials[0]);
         System.out.print("Palavra-Passe :: ");
-        String password = stdin.readLine();
-        this.u.setPassword(password);
+        credentials[1] = stdin.readLine();
+        this.u.setPassword(credentials[1]);
 
         // Send registration information to the server without explicit action
-
-        RegisterMessage.serialize(out, username, password);
+        String payload = Message.createPayload(credentials);
+        Message.serialize(out, "REGISTER", payload);
         out.flush();
 
         // Receive a response from the server
@@ -163,7 +172,6 @@ public class ClientController {
     }
 
     public void sendProgram() throws IOException {
-
         System.out.print("Path do ficheiro :: ");
         String file_name = stdin.readLine();
 
@@ -180,8 +188,7 @@ public class ClientController {
         read_file.close();
 
         // Send byte array to the server
-
-        SendProgramMessage.serialize(out, u.getNomeUtilizador(), pedido_id, Integer.parseInt(memoria), Arrays.toString(array));
+        Message.serialize(out, "SEND_PROGRAM", u.getNomeUtilizador() + ";" + pedido_id + ";" + Integer.parseInt(memoria) + ";" + Arrays.toString(array));
         out.flush();
         this.pedido_id++;
 
@@ -190,7 +197,7 @@ public class ClientController {
     }
 
     public void serverAvailability() throws IOException {
-        out.writeUTF("SERVER_AVAILABILITY");
+        Message.serialize(out,"SERVER_AVAILABILITY", "");
         out.flush();
         Thread t = new Thread(new ReceiveResponse(l,this.u,in));
         t.start();

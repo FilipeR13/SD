@@ -25,12 +25,20 @@ public class ProgramExecutor implements Runnable {
         try {
             byte[] output = JobFunction.execute(pr.getFile());
             if (out != null) {
-                JobDoneMessage.serialize(out, pr.getClientUsername(), pr.getMemory(), pr.getPedido_id(), Arrays.toString(output));
+                Message.serialize(out,"JOB_DONE", pr.getClientUsername() + ";" + pr.getMemory() + ";" + pr.getPedido_id() + ";" + Arrays.toString(output));
                 out.flush();
                 System.err.println("success, returned " + output.length + " bytes");
             }
         } catch (JobFunctionException e) {
             System.err.println("job failed: code=" + e.getCode() + " message=" + e.getMessage());
+            if (out != null) {
+                try {
+                    Message.serialize(out,"JOB_FAILED",pr.getClientUsername() + ";" + pr.getMemory() + ";" + pr.getPedido_id() + ";" + e.getCode() + ";" + e.getMessage());
+                    out.flush();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {

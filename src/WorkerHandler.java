@@ -58,17 +58,20 @@ public class WorkerHandler implements Runnable {
             // Keep the connection open for ongoing communication
             while (true) {
                 // Read data from the client
-                String action = in.readUTF();
-                if (action == null) {
+                Message workerMessage = Message.deserialize(in);
+                if (workerMessage.getType() == null) {
                     System.out.println("Worker disconnected!");
                     return;
                 }
-                switch (action) {
+                switch (workerMessage.getType()) {
                     case "MEMORY_INFO":
-                        this.handleMemoryInfo(in,out);
+                        this.handleMemoryInfo(in,out,workerMessage);
                         break;
                     case "JOB_DONE":
-                        this.handleJobDone(action,in,this.worker_id);
+                        this.handleJobCompleted(in, workerMessage, "JOB_DONE");
+                        break;
+                    case "JOB_FAILED":
+                        this.handleJobCompleted(in,workerMessage,"JOB_FAILED");
                         break;
                     default:
                         out.writeUTF("Invalid action");
@@ -91,19 +94,19 @@ public class WorkerHandler implements Runnable {
         }
     }
 
-    public void handleJobDone(String action, DataInputStream in, int worker_id) throws IOException {
-        JobDoneMessage jobDoneMessage = JobDoneMessage.deserialize(in);
+    public void handleJobCompleted(DataInputStream in, Message workerMessage, String message_type) throws IOException {
+        String arguments[] = Message.parsePayload(workerMessage.getPayload());
+        server.changeMemoryWorkerPerId(worker_id,Integer.parseInt(arguments[1]));
+        DataOutputStream clientOut = server.getConnectedClients().get(arguments[0]);
 
-        server.changeMemoryWorkerPerId(worker_id,jobDoneMessage.getMemory_used());
-        DataOutputStream clientOut = server.getConnectedClients().get(jobDoneMessage.getNome_utilizador());
-
-        JobDoneMessage.serialize(clientOut,jobDoneMessage.getNome_utilizador(),jobDoneMessage.getMemory_used(),jobDoneMessage.getPedido_id(),jobDoneMessage.getResult());
+        Message.serialize(clientOut,message_type ,workerMessage.getPayload());
+        clientOut.flush();
     }
 
-    public void handleMemoryInfo(DataInputStream in, DataOutputStream out) throws IOException {
-        MemoryInfoMessage memoryInfoMessage = MemoryInfoMessage.deserialize(in);
+    public void handleMemoryInfo(DataInputStream in, DataOutputStream out,Message workerMessage) throws IOException {
+        String arguments[] = Message.parsePayload(workerMessage.getPayload());
 
-        server.addConnectedWorker(new Worker(this.worker_id, out, memoryInfoMessage.getMax_memory() - memoryInfoMessage.getMemory_used()));
+        server.addConnectedWorker(new Worker(this.worker_id, out, Integer.parseInt(arguments[0]) - Integer.parseInt(arguments[1])));
     }
 }
 

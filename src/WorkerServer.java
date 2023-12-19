@@ -45,7 +45,7 @@ public class WorkerServer {
     private static final int SERVER_PORT = 9091;  // Replace with your Main Server's port
 
     public void sendMemoryInfo(DataOutputStream out) throws IOException {
-        MemoryInfoMessage.serialize(out, this.max_memory, this.memory_used);
+        Message.serialize(out,"MEMORY_INFO", this.max_memory + ";" + this.memory_used);
         out.flush();
     }
 
@@ -63,14 +63,15 @@ public class WorkerServer {
 
             while (true) {
                 // Read data from the server
-                String action = in.readUTF();
-                if (action == null) {
+                Message message = Message.deserialize(in);
+                if (message.getType() == null) {
                     System.out.println("Server disconnected!");
                     return;
                 }
-                if(action.equals("SEND_PROGRAM")) {
-                    SendProgramMessage spm = SendProgramMessage.deserialize(in);
-                    ProgramRequest pr = new ProgramRequest(spm.getNome_utilizador(), spm.getPedido_id(), spm.getMemoria(), spm.getPrograma().getBytes());
+                if(message.getType().equals("SEND_PROGRAM")) {
+                    String arguments[] = Message.parsePayload(message.getPayload());
+
+                    ProgramRequest pr = new ProgramRequest(arguments);
                     Thread t = new Thread(new ProgramExecutor(pr, workerServer,out));
                     t.start();
                 }

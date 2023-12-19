@@ -27,13 +27,13 @@ public class ClientHandler implements Runnable {
             // Keep the connection open for ongoing communication
             while (true) {
                 // Read data from the client
-                String action = in.readUTF();
-                switch (action) {
+                Message clientMessage = Message.deserialize(in);
+                switch (clientMessage.getType()) {
                     case "LOGIN":
-                        this.handleLogin(in, out);
+                        this.handleLogin(in, out, clientMessage);
                         break;
                     case "REGISTER":
-                        username = this.handleRegister(in, out);
+                        username = this.handleRegister(in, out, clientMessage);
                         break;
                     default:
                         out.writeUTF("Invalid action");
@@ -56,23 +56,23 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public void handleLogin(DataInputStream in, DataOutputStream out) throws IOException {
-        LoginMessage login = LoginMessage.deserialize(in);
+    public void handleLogin(DataInputStream in, DataOutputStream out, Message clientMessage) throws IOException {
+        String arguments[] = Message.parsePayload(clientMessage.getPayload());
 
         // Check if the user exists and the password is correct
-        if (server.containsAccount(login.getUsername()) && server.getAccount(login.getUsername()).getPassword().equals(login.getPassword())) {
+        if (server.containsAccount(arguments[0]) && server.getAccount(arguments[0]).getPassword().equals(arguments[1])) {
             out.writeUTF("Login successful");
             out.flush();
 
             // Keep the connection open for ongoing communication
             while (true) {
-                String clientMessage = in.readUTF();
-                if (clientMessage == null)
+                Message message = Message.deserialize(in);
+                if (message.getType() == null)
                     return;
-                switch (clientMessage) {
+                switch (message.getType()) {
                     case "SEND_PROGRAM":
-                        SendProgramMessage spm = SendProgramMessage.deserialize(in);
-                        ProgramRequest pr = new ProgramRequest(spm.getNome_utilizador(), spm.getPedido_id(), spm.getMemoria(), spm.getPrograma().getBytes());
+                        String values[] = Message.parsePayload(message.getPayload());
+                        ProgramRequest pr = new ProgramRequest(values);
                         server.addPendingProgram(pr);
                         new Thread(() -> {
                             try {
@@ -89,7 +89,7 @@ public class ClientHandler implements Runnable {
                                 for(Worker w : server.getConnectedWorkers()) {
                                     if(w.getMemory_available() > max_memory_available) max_memory_available = w.getMemory_available();
                                 }
-                                ServerStatusMessage.serialize(out, max_memory_available, server.sizePendingPrograms());
+                                Message.serialize(out, "SERVER_STATUS",max_memory_available + ";" + server.sizePendingPrograms());
                                 out.flush();
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -107,24 +107,24 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public String handleRegister(DataInputStream in, DataOutputStream out) throws IOException {
-        RegisterMessage register = RegisterMessage.deserialize(in);
+    public String handleRegister(DataInputStream in, DataOutputStream out, Message clientMessage) throws IOException {
+        String arguments[] = Message.parsePayload(clientMessage.getPayload());
 
         // Check if the username already exists
-        if (!server.containsAccount(register.getUsername())) {
+        if (!server.containsAccount(arguments[0])) {
 
             // Register the new user
-            Account newAccount = new Account(register.getUsername(), register.getPassword());
-            server.addAccount(register.getUsername(),newAccount);
+            Account newAccount = new Account(arguments[0], arguments[1]);
+            server.addAccount(arguments[0],newAccount);
             out.writeUTF("Registration successful");
             out.flush();
 
             // Store the connected client's PrintWriter
-            server.addConnectedClient(register.getUsername(), out);
+            server.addConnectedClient(arguments[0], out);
         } else {
             out.writeUTF("Username already exists");
             out.flush();
         }
-        return register.getUsername();
+        return arguments[0];
     }
 }
