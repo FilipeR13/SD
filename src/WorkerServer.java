@@ -1,7 +1,5 @@
 import java.io.*;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 public class WorkerServer {
 
@@ -43,7 +41,7 @@ public class WorkerServer {
     private static final String SERVER_IP = "localhost";  // Replace with your Main Server's IP address
     private static final int SERVER_PORT = 9091;  // Replace with your Main Server's port
 
-    public void sendMemoryInfo(DataOutputStream out) throws IOException {
+    public void sendMemoryInfo(SafeDataOutputStream out) throws IOException {
         Message.serialize(out,"MEMORY_INFO", this.max_memory + ";" + this.memory_used);
         out.flush();
     }
@@ -56,8 +54,8 @@ public class WorkerServer {
             System.out.println("Connected to Main Server: " + workerSocket.getInetAddress().getHostAddress());
 
             // Set up input and output streams
-            DataInputStream in = new DataInputStream(workerSocket.getInputStream());
-            DataOutputStream out = new DataOutputStream(workerSocket.getOutputStream());
+            SafeDataInputStream in = new SafeDataInputStream(workerSocket.getInputStream());
+            SafeDataOutputStream out = new SafeDataOutputStream(workerSocket.getOutputStream());
             workerServer.sendMemoryInfo(out);
 
             while (true) {

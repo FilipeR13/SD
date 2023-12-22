@@ -7,7 +7,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Server {
     private Map<String, Account> accounts;
-    private Map<String, DataOutputStream> connectedClients;
+    private Map<String, SafeDataOutputStream> connectedClients;
     private static PriorityQueue<ProgramRequest> pendingPrograms;
     //Map for the connectedWorkers with an int as a key and then a tuple of ints for data
     private List<Worker> connectedWorkers;
@@ -35,7 +35,7 @@ public class Server {
         return accounts;
     }
 
-    public Map<String, DataOutputStream> getConnectedClients() {
+    public Map<String, SafeDataOutputStream> getConnectedClients() {
         return connectedClients;
     }
 
@@ -51,7 +51,7 @@ public class Server {
         this.accounts = accounts;
     }
 
-    public void setConnectedClients(Map<String, DataOutputStream> connectedClients) {
+    public void setConnectedClients(Map<String, SafeDataOutputStream> connectedClients) {
         this.connectedClients = connectedClients;
     }
 
@@ -83,7 +83,7 @@ public class Server {
         }
     }
 
-    public void addConnectedClient(String username, DataOutputStream out) {
+    public void addConnectedClient(String username, SafeDataOutputStream out) {
         connectedClientsLock.lock();
         try {
             this.connectedClients.put(username, out);
@@ -153,7 +153,7 @@ public class Server {
         }
     }
 
-    public DataOutputStream getConnectedClient(String username) {
+    public SafeDataOutputStream getConnectedClient(String username) {
         connectedClientsLock.lock();
         try {
             return this.connectedClients.get(username);

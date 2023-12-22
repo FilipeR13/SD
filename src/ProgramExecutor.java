@@ -3,7 +3,6 @@ import sd23.JobFunctionException;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -11,10 +10,10 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ProgramExecutor implements Runnable {
     private ProgramRequest pr;
     private WorkerServer server;
-    private DataOutputStream out;
+    private SafeDataOutputStream out;
     private Lock l = new ReentrantLock();
 
-    public ProgramExecutor(ProgramRequest pr, WorkerServer server, DataOutputStream out) {
+    public ProgramExecutor(ProgramRequest pr, WorkerServer server, SafeDataOutputStream out) {
         this.pr = pr;
         this.server = server;
         this.out = out;

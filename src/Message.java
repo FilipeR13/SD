@@ -1,8 +1,4 @@
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Message {
     private String type;
@@ -54,12 +50,12 @@ public class Message {
 
     // serialize and deserialize
 
-    public static void serialize(DataOutputStream out, String type, String payload) throws IOException {
+    public static void serialize(SafeDataOutputStream out, String type, String payload) throws IOException {
         out.writeUTF(type);
         out.writeUTF(payload);
     }
 
-    public static Message deserialize(DataInputStream in) throws IOException {
+    public static Message deserialize(SafeDataInputStream in) throws IOException {
         String type = in.readUTF();
         String payload = in.readUTF();
         return new Message(type, payload);

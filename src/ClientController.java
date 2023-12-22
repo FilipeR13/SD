@@ -12,9 +12,9 @@ public class ClientController {
     private static class ReceiveResponse implements Runnable{
         private Lock l;
         private Account u;
-        private DataInputStream in;
+        private SafeDataInputStream in;
 
-        public ReceiveResponse(Lock l, Account u, DataInputStream in){
+        public ReceiveResponse(Lock l, Account u, SafeDataInputStream in){
             this.l = l;
             this.u = u;
             this.in = in;
@@ -75,8 +75,8 @@ public class ClientController {
 
     private Account u;
     private Socket socket;
-    private DataInputStream in;
-    private DataOutputStream out;
+    private SafeDataInputStream in;
+    private SafeDataOutputStream out;
     private BufferedReader stdin;
     private int pedido_id = 1;
     private Lock l = new ReentrantLock();
@@ -94,8 +94,8 @@ public class ClientController {
         try {
             socket = new Socket("localhost", 9090);
             stdin = new BufferedReader(new InputStreamReader(System.in));
-            in = new DataInputStream(socket.getInputStream());
-            out = new DataOutputStream(socket.getOutputStream());
+            in = new SafeDataInputStream(socket.getInputStream());
+            out = new SafeDataOutputStream(socket.getOutputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }

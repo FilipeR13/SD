@@ -14,15 +14,23 @@ public class ClientHandler implements Runnable {
         this.server = server;
     }
 
+    public void closeconnectionClient(SafeDataInputStream in, SafeDataOutputStream out, String username) throws IOException {
+        // Close the streams and clientSocket
+        if(username != null) server.removeConnectedClient(username);
+        in.close();
+        out.close();
+        this.clientSocket.close();
+    }
+
     public void run(){
-        DataInputStream in = null;
-        DataOutputStream out = null;
+        SafeDataInputStream in = null;
+        SafeDataOutputStream out = null;
         String username = null;
 
         try {
             // Create input and output streams for communication
-            in = new DataInputStream(this.clientSocket.getInputStream());
-            out = new DataOutputStream(this.clientSocket.getOutputStream());
+            in = new SafeDataInputStream(this.clientSocket.getInputStream());
+            out = new SafeDataOutputStream(this.clientSocket.getOutputStream());
 
             // Keep the connection open for ongoing communication
             while (true) {
@@ -31,6 +39,7 @@ public class ClientHandler implements Runnable {
                 switch (clientMessage.getType()) {
                     case "LOGIN":
                         this.handleLogin(in, out, clientMessage);
+                        closeconnectionClient(in,out,username);
                         break;
                     case "REGISTER":
                         username = this.handleRegister(in, out, clientMessage);
@@ -45,10 +54,7 @@ public class ClientHandler implements Runnable {
         } finally {
             try {
                 // Close the streams and clientSocket
-                if(username != null) server.removeConnectedClient(username);
-                in.close();
-                out.close();
-                this.clientSocket.close();
+                closeconnectionClient(in,out,username);
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -56,7 +62,7 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public void handleLogin(DataInputStream in, DataOutputStream out, Message clientMessage) throws IOException {
+    public void handleLogin(SafeDataInputStream in, SafeDataOutputStream out, Message clientMessage) throws IOException {
         String arguments[] = Message.parsePayload(clientMessage.getPayload());
 
         // Check if the user exists and the password is correct
@@ -66,6 +72,8 @@ public class ClientHandler implements Runnable {
 
             // Keep the connection open for ongoing communication
             while (true) {
+                // ! when I close the pipe a null is being sent to the server and it is crashing
+                // Read data from the client
                 Message message = Message.deserialize(in);
                 if (message.getType() == null)
                     return;
@@ -100,7 +108,7 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public String handleRegister(DataInputStream in, DataOutputStream out, Message clientMessage) throws IOException {
+    public String handleRegister(SafeDataInputStream in, SafeDataOutputStream out, Message clientMessage) throws IOException {
         String arguments[] = Message.parsePayload(clientMessage.getPayload());
 
         // Check if the username already exists

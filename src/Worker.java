@@ -3,13 +3,13 @@ import java.io.PrintWriter;
 
 public class Worker {
     private int worker_id;
-    private DataOutputStream out;
+    private SafeDataOutputStream out;
     private int memory_available;
     private int num_jobs;
 
     //constructor
 
-    public Worker(int worker_id, DataOutputStream out, int memory_available) {
+    public Worker(int worker_id, SafeDataOutputStream out, int memory_available) {
         this.out = out;
         this.worker_id = worker_id;
         this.memory_available = memory_available;
@@ -25,7 +25,7 @@ public class Worker {
 
     //getters and setters
 
-    public DataOutputStream getOut() {
+    public SafeDataOutputStream getOut() {
         return this.out;
     }
 
@@ -41,7 +41,7 @@ public class Worker {
         return this.num_jobs;
     }
 
-    public void setOut(DataOutputStream out) {
+    public void setOut(SafeDataOutputStream out) {
         this.out = out;
     }
 

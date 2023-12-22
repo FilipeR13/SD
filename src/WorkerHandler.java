@@ -1,7 +1,5 @@
 import java.io.*;
 import java.net.Socket;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class WorkerHandler implements Runnable {
 
@@ -50,12 +48,12 @@ public class WorkerHandler implements Runnable {
     }
 
     public void run() {
-        DataInputStream in = null;
-        DataOutputStream out = null;
+        SafeDataInputStream in = null;
+        SafeDataOutputStream out = null;
         try {
             // Create input and output streams for communication
-            in = new DataInputStream(this.workerSocket.getInputStream());
-            out = new DataOutputStream(this.workerSocket.getOutputStream());
+            in = new SafeDataInputStream(this.workerSocket.getInputStream());
+            out = new SafeDataOutputStream(this.workerSocket.getOutputStream());
 
             // Keep the connection open for ongoing communication
             while (true) {
@@ -96,10 +94,10 @@ public class WorkerHandler implements Runnable {
         }
     }
 
-    public void handleJobCompleted(DataInputStream in, Message workerMessage, String message_type) throws IOException {
+    public void handleJobCompleted(SafeDataInputStream in, Message workerMessage, String message_type) throws IOException {
         String arguments[] = Message.parsePayload(workerMessage.getPayload());
         server.changeMemoryWorkerPerId(worker_id,Integer.parseInt(arguments[1]));
-        DataOutputStream clientOut = server.getConnectedClients().get(arguments[0]);
+        SafeDataOutputStream clientOut = server.getConnectedClients().get(arguments[0]);
         // decrement the num_jobs of the worker
         server.decrementNumJobsWorker(worker_id);
 
@@ -107,7 +105,7 @@ public class WorkerHandler implements Runnable {
         clientOut.flush();
     }
 
-    public void handleMemoryInfo(DataInputStream in, DataOutputStream out,Message workerMessage) throws IOException {
+    public void handleMemoryInfo(SafeDataInputStream in, SafeDataOutputStream out, Message workerMessage) throws IOException {
         String arguments[] = Message.parsePayload(workerMessage.getPayload());
 
         server.addConnectedWorker(new Worker(this.worker_id, out, Integer.parseInt(arguments[0]) - Integer.parseInt(arguments[1])));
