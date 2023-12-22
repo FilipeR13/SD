@@ -1,5 +1,7 @@
 import java.io.*;
 import java.net.Socket;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class WorkerHandler implements Runnable {
 
@@ -98,6 +100,8 @@ public class WorkerHandler implements Runnable {
         String arguments[] = Message.parsePayload(workerMessage.getPayload());
         server.changeMemoryWorkerPerId(worker_id,Integer.parseInt(arguments[1]));
         DataOutputStream clientOut = server.getConnectedClients().get(arguments[0]);
+        // decrement the num_jobs of the worker
+        server.decrementNumJobsWorker(worker_id);
 
         Message.serialize(clientOut,message_type ,workerMessage.getPayload());
         clientOut.flush();

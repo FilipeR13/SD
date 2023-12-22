@@ -6,17 +6,20 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ProgramExecutor implements Runnable {
     private ProgramRequest pr;
     private WorkerServer server;
     private DataOutputStream out;
+    private Lock l = new ReentrantLock();
 
     public ProgramExecutor(ProgramRequest pr, WorkerServer server, DataOutputStream out) {
         this.pr = pr;
         this.server = server;
         this.out = out;
     }
+
 
     public void run() {
         //set the memory used by the worker
@@ -25,8 +28,13 @@ public class ProgramExecutor implements Runnable {
         try {
             byte[] output = JobFunction.execute(pr.getFile());
             if (out != null) {
-                Message.serialize(out,"JOB_DONE", pr.getClientUsername() + ";" + pr.getMemory() + ";" + pr.getPedido_id() + ";" + Arrays.toString(output));
-                out.flush();
+                l.lock();
+                try{
+                    Message.serialize(out,"JOB_DONE", pr.getClientUsername() + ";" + pr.getMemory() + ";" + pr.getPedido_id() + ";" + Arrays.toString(output));
+                    out.flush();
+                }finally {
+                    l.unlock();
+                }
                 System.err.println("success, returned " + output.length + " bytes");
             }
         } catch (JobFunctionException e) {
@@ -45,4 +53,6 @@ public class ProgramExecutor implements Runnable {
             server.setMemory_used(server.getMemory_used() - pr.getMemory());
         }
     }
+
+
 }

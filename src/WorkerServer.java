@@ -2,7 +2,6 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.concurrent.locks.Lock;
 
 public class WorkerServer {
 
@@ -70,7 +69,6 @@ public class WorkerServer {
                 }
                 if(message.getType().equals("SEND_PROGRAM")) {
                     String arguments[] = Message.parsePayload(message.getPayload());
-
                     ProgramRequest pr = new ProgramRequest(arguments);
                     Thread t = new Thread(new ProgramExecutor(pr, workerServer,out));
                     t.start();

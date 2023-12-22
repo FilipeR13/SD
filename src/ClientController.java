@@ -34,15 +34,9 @@ public class ClientController {
 
 
         public void getResult(String response, String id){
-            Object[] result = Arrays.stream(response.substring(1, response.length() - 1).split(", ")).map(Byte::parseByte).toArray();
-            byte[] to_byte = new byte[result.length];
-            for (int i = 0; i < result.length; i++) {
-                to_byte[i] = (byte) result[i];
-            }
-            String result_string = Arrays.toString(to_byte);
-            System.out.println("Server response: " + id + " " + result_string);
+            System.out.println("Server response: " + id + " " + response);
 
-            sendToFile(u.getNomeUtilizador(),result_string, id);
+            sendToFile(u.getNomeUtilizador(),response, id);
         }
 
         public void run() {
@@ -192,7 +186,7 @@ public class ClientController {
         read_file.close();
 
         // Send byte array to the server
-        Message.serialize(out, "SEND_PROGRAM", u.getNomeUtilizador() + ";" + pedido_id + ";" + Integer.parseInt(memoria) + ";" + Arrays.toString(array));
+        Message.serialize(out, "SEND_PROGRAM", u.getNomeUtilizador() + ";" + this.pedido_id + ";" + memoria + ";" + Arrays.toString(array));
         out.flush();
         this.pedido_id++;
 

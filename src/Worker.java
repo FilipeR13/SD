@@ -5,6 +5,7 @@ public class Worker {
     private int worker_id;
     private DataOutputStream out;
     private int memory_available;
+    private int num_jobs;
 
     //constructor
 
@@ -12,12 +13,14 @@ public class Worker {
         this.out = out;
         this.worker_id = worker_id;
         this.memory_available = memory_available;
+        this.num_jobs = 0;
     }
 
     public Worker() {
         this.out = null;
         this.worker_id = 0;
         this.memory_available = 0;
+        this.num_jobs = 0;
     }
 
     //getters and setters
@@ -34,6 +37,10 @@ public class Worker {
         return this.memory_available;
     }
 
+    public int getNum_jobs() {
+        return this.num_jobs;
+    }
+
     public void setOut(DataOutputStream out) {
         this.out = out;
     }
@@ -44,5 +51,9 @@ public class Worker {
 
     public void setMemory_available(int memory_available) {
         this.memory_available = memory_available;
+    }
+
+    public void setNum_jobs(int num_jobs) {
+        this.num_jobs = num_jobs;
     }
 }

@@ -74,13 +74,6 @@ public class ClientHandler implements Runnable {
                         String values[] = Message.parsePayload(message.getPayload());
                         ProgramRequest pr = new ProgramRequest(values);
                         server.addPendingProgram(pr);
-                        new Thread(() -> {
-                            try {
-                                server.sendProgram(pr);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }).start();
                         break;
                     case "SERVER_AVAILABILITY":
                         new Thread(() -> {

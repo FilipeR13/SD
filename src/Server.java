@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -11,6 +12,9 @@ public class Server {
     //Map for the connectedWorkers with an int as a key and then a tuple of ints for data
     private List<Worker> connectedWorkers;
 
+    private final Lock l = new ReentrantLock();
+    private final Condition notEnoughMemory = l.newCondition();
+    private final Condition emptyQueue = l.newCondition();
 
     private final Lock accountsLock = new ReentrantLock();
     private final Lock connectedClientsLock = new ReentrantLock();
@@ -314,49 +318,18 @@ public class Server {
         }
     }
 
-    // Print of the queue pending programs
+    // decrement number of jobs of a worker
 
-    public void printPendingPrograms() {
-        pendingProgramsLock.lock();
+    public void decrementNumJobsWorker(int worker_id) {
+        connectedWorkersLock.lock();
         try {
-            for (ProgramRequest pr : this.pendingPrograms) {
-                System.out.println(pr.getPedido_id() + " " + pr.getMemory() + " " + pr.getClientUsername());
-            }
-        } finally {
-            pendingProgramsLock.unlock();
-        }
-    }
-
-    //method used to send a program to the best worker available (with more memory available)
-
-    //when there isnt enough memory available and there is a program waiting to be executed and I send a server status, the server status is only sent after there is memory available,
-    // the code is getting stuck inside a while(true) and does not send the server status back to the client
-
-    public void sendProgram(ProgramRequest pr) throws IOException {
-
-        while (true) {
-            int bestMemoryAvailable = Integer.MIN_VALUE;
-            Worker bestWorker = null;
-
-            // Check available memory in connected workers
             for (Worker w : this.connectedWorkers) {
-                if (w.getMemory_available() > bestMemoryAvailable && w.getMemory_available() >= pr.getMemory()) {
-                    bestMemoryAvailable = w.getMemory_available();
-                    bestWorker = w;
+                if (w.getWorker_id() == worker_id) {
+                    w.setNum_jobs(w.getNum_jobs() - 1);
                 }
             }
-
-            if (bestWorker != null) {
-                // Found a worker with enough memory, send the program
-                DataOutputStream bestWorkerOut = bestWorker.getOut();
-                Message.serialize(bestWorkerOut,"SEND_PROGRAM",pr.getClientUsername() + ";" + pr.getPedido_id() + ";" + pr.getMemory() + ";" + new String(pr.getFile()));
-                bestWorkerOut.flush();
-
-                this.getPendingPrograms().poll();
-                bestWorker.setMemory_available(bestWorker.getMemory_available() - pr.getMemory());
-                // Exit the loop since the program has been sent
-                break;
-            }
+        } finally {
+            connectedWorkersLock.unlock();
         }
     }
 
@@ -367,6 +340,8 @@ public class Server {
         int portWorkers = 9091;
         int id_worker = 1;
         Server server = new Server();
+        Thread jobSchedulerThread = new Thread(new JobScheduler(server));
+        jobSchedulerThread.start();
 
         try {
             // Create server sockets
