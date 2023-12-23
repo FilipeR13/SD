@@ -4,6 +4,7 @@ import sd23.JobFunctionException;
 import java.io.*;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.Map;
 
 public class ClientHandler implements Runnable {
     private Socket clientSocket;
@@ -87,7 +88,7 @@ public class ClientHandler implements Runnable {
                         new Thread(() -> {
                             try {
                                 int max_memory_available = 0;
-                                for(Worker w : server.getConnectedWorkers()) {
+                                for(Worker w : server.getConnectedWorkers().values()) {
                                     if(w.getMemory_available() > max_memory_available) max_memory_available = w.getMemory_available();
                                 }
                                 Message.serialize(out, "SERVER_STATUS",max_memory_available + ";" + server.sizePendingPrograms());

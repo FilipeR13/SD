@@ -1,12 +1,10 @@
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
 
 public class JobScheduler implements Runnable{
 
@@ -22,27 +20,16 @@ public class JobScheduler implements Runnable{
             lock.lock();
             try {
                 if(!server.getPendingPrograms().isEmpty()) {
+                    ProgramRequest programRequest = server.getPendingPrograms().peek();
 
-                    //check if all the workers have 0 memory available
-                    boolean allWorkersFull = true;
-                    for (Worker worker : server.getConnectedWorkers()) {
-                        if (worker.getMemory_available() != 0) {
-                            allWorkersFull = false;
-                        }
+                    // Find a worker with enough memory, wait if none are available
+                    List<Worker> availableWorkers = findAvailableWorker(programRequest.getMemory());
+                    while (availableWorkers.isEmpty()) {
+                        availableWorkers = findAvailableWorker(programRequest.getMemory());
                     }
-                    if (!allWorkersFull) {
 
-                        ProgramRequest programRequest = server.getPendingPrograms().peek();
-
-                        // Find a worker with enough memory, wait if none are available
-                        List<Worker> availableWorkers = findAvailableWorker(programRequest.getMemory());
-                        while (availableWorkers.size() == 0) {
-                            availableWorkers = findAvailableWorker(programRequest.getMemory());
-                        }
-
-                        // Send the program to the best worker
-                        sendJobToBestWorker(programRequest, availableWorkers);
-                    }
+                    // Send the program to the best worker
+                    sendJobToBestWorker(programRequest, availableWorkers);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -53,13 +40,9 @@ public class JobScheduler implements Runnable{
     }
 
     private List<Worker> findAvailableWorker(int requiredMemory) {
-        List<Worker> workers = new ArrayList<>();
-        for (Worker worker : server.getConnectedWorkers()) {
-            if (worker.getMemory_available() >= requiredMemory) {
-                workers.add(worker);
-            }
-        }
-        return workers;
+        return server.getConnectedWorkers().values().stream()
+                        .filter(worker -> worker.getMemory_available() >= requiredMemory)
+                        .toList();
     }
 
     private void sendJobToBestWorker(ProgramRequest pr, List<Worker> availableWorkers) throws IOException {
