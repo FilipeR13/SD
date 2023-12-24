@@ -1,15 +1,14 @@
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Stream;
 
 public class JobScheduler implements Runnable{
 
     private Server server;
     private final Lock lock = new ReentrantLock();
+    private final Condition conn = lock.newCondition();
 
     public JobScheduler(Server server) {
         this.server = server;
@@ -26,6 +25,7 @@ public class JobScheduler implements Runnable{
                     // Find a worker with enough memory, wait if none are available
                     List<Worker> availableWorkers = findAvailableWorker(programRequest.getMemory());
                     while (availableWorkers.isEmpty()) {
+                        conn.await();
                         availableWorkers = findAvailableWorker(programRequest.getMemory());
                         programRequest = server.getPendingPrograms().peek();
                     }
@@ -35,6 +35,8 @@ public class JobScheduler implements Runnable{
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             } finally {
                 lock.unlock();
             }
@@ -72,6 +74,15 @@ public class JobScheduler implements Runnable{
         bestWorker.setMemory_available(bestWorker.getMemory_available() - pr.getMemory());
         bestWorker.setNum_jobs(bestWorker.getNum_jobs() + 1);
 
+    }
+
+    public void setCondition() {
+        this.lock.lock();
+        try {
+            this.conn.signal();
+        } finally {
+            this.lock.unlock();
+        }
     }
 }
 
