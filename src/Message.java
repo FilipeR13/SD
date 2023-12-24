@@ -56,8 +56,12 @@ public class Message {
     }
 
     public static Message deserialize(SafeDataInputStream in) throws IOException {
-        String type = in.readUTF();
-        String payload = in.readUTF();
-        return new Message(type, payload);
+        try {
+            String type = in.readUTF();
+            String payload = in.readUTF();
+            return new Message(type, payload);
+        } catch (IOException e) {
+            return null;
+        }
     }
 }

@@ -46,6 +46,12 @@ public class ClientController {
                 try {
 
                     Message serverMessage = Message.deserialize(in);
+
+                    if (serverMessage == null) {
+                        System.out.println("Server disconnected!");
+                        return;
+                    }
+
                     String arguments[] = Message.parsePayload(serverMessage.getPayload());
 
                     // do a switch case intead

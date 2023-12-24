@@ -59,7 +59,8 @@ public class WorkerHandler implements Runnable {
             while (true) {
                 // Read data from the client
                 Message workerMessage = Message.deserialize(in);
-                if (workerMessage.getType() == null) {
+
+                if (workerMessage == null) {
                     System.out.println("Worker disconnected!");
                     return;
                 }

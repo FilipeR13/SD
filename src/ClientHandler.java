@@ -37,10 +37,14 @@ public class ClientHandler implements Runnable {
             while (true) {
                 // Read data from the client
                 Message clientMessage = Message.deserialize(in);
+
+                if (clientMessage == null) {
+                    System.out.println("Client disconnected!");
+                    return;
+                }
                 switch (clientMessage.getType()) {
                     case "LOGIN":
                         this.handleLogin(in, out, clientMessage);
-                        closeconnectionClient(in,out,username);
                         break;
                     case "REGISTER":
                         username = this.handleRegister(in, out, clientMessage);
@@ -73,11 +77,14 @@ public class ClientHandler implements Runnable {
 
             // Keep the connection open for ongoing communication
             while (true) {
-                // ! when I close the pipe a null is being sent to the server and it is crashing
                 // Read data from the client
                 Message message = Message.deserialize(in);
-                if (message.getType() == null)
+
+                if (message == null) {
+                    System.out.println("Client disconnected!");
                     return;
+                }
+
                 switch (message.getType()) {
                     case "SEND_PROGRAM":
                         String values[] = Message.parsePayload(message.getPayload());
