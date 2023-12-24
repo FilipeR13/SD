@@ -65,6 +65,7 @@ public class ClientController {
                             break;
                         case "JOB_FAILED":
                             System.out.println("Job " + arguments[2] + " failed: code=" + arguments[3] + " message=" + arguments[4]);
+                            sendToFile(u.getNomeUtilizador(),"Job failed: code=" + arguments[3] + " message=" + arguments[4], arguments[2]);
                             break;
                         default:
                             System.out.println("Server response: " + serverMessage.getType());
