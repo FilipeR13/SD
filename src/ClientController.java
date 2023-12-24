@@ -46,6 +46,12 @@ public class ClientController {
                 try {
 
                     Message serverMessage = Message.deserialize(in);
+
+                    if (serverMessage == null) {
+                        System.out.println("Server disconnected!");
+                        return;
+                    }
+
                     String arguments[] = Message.parsePayload(serverMessage.getPayload());
 
                     // do a switch case intead
@@ -59,6 +65,7 @@ public class ClientController {
                             break;
                         case "JOB_FAILED":
                             System.out.println("Job " + arguments[2] + " failed: code=" + arguments[3] + " message=" + arguments[4]);
+                            sendToFile(u.getNomeUtilizador(),"Job failed: code=" + arguments[3] + " message=" + arguments[4], arguments[2]);
                             break;
                         default:
                             System.out.println("Server response: " + serverMessage.getType());

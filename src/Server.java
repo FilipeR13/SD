@@ -10,11 +10,9 @@ public class Server {
     private Map<String, SafeDataOutputStream> connectedClients;
     private static PriorityQueue<ProgramRequest> pendingPrograms;
     //Map for the connectedWorkers with an int as a key and then a tuple of ints for data
-    private List<Worker> connectedWorkers;
+    private Map<Integer,Worker> connectedWorkers;
 
     private final Lock l = new ReentrantLock();
-    private final Condition notEnoughMemory = l.newCondition();
-    private final Condition emptyQueue = l.newCondition();
 
     private final Lock accountsLock = new ReentrantLock();
     private final Lock connectedClientsLock = new ReentrantLock();
@@ -26,7 +24,7 @@ public class Server {
         this.accounts = new HashMap<>();
         this.connectedClients = new HashMap<>();
         this.pendingPrograms = new PriorityQueue<>(new ProgramRequestComparator());
-        this.connectedWorkers = new ArrayList<>();
+        this.connectedWorkers = new HashMap<>();
     }
 
     // getters and setters
@@ -43,7 +41,7 @@ public class Server {
         return pendingPrograms;
     }
 
-    public List<Worker> getConnectedWorkers() {
+    public Map<Integer,Worker> getConnectedWorkers() {
         return connectedWorkers;
     }
 
@@ -59,7 +57,7 @@ public class Server {
             this.pendingPrograms = pendingPrograms;
     }
 
-    public void setConnectedWorkers(List<Worker> connectedWorkers) {
+    public void setConnectedWorkers(Map<Integer,Worker> connectedWorkers) {
         this.connectedWorkers = connectedWorkers;
     }
 
@@ -122,7 +120,7 @@ public class Server {
     public void addConnectedWorker(Worker worker){
         connectedWorkersLock.lock();
         try {
-            this.connectedWorkers.add(worker);
+            this.connectedWorkers.put(worker.getWorker_id(), worker);
         } finally {
             connectedWorkersLock.unlock();
         }
@@ -131,12 +129,7 @@ public class Server {
     public void removeConnectedWorker(int worker_id){
         connectedWorkersLock.lock();
         try {
-            for(Worker w : this.connectedWorkers){
-                if(w.getWorker_id() == worker_id){
-                    this.connectedWorkers.remove(w);
-                    break;
-                }
-            }
+            this.connectedWorkers.remove(worker_id);
         } finally {
             connectedWorkersLock.unlock();
         }
@@ -174,12 +167,7 @@ public class Server {
     public Worker getConnectedWorker(int id) {
         connectedWorkersLock.lock();
         try {
-            for (Worker w : this.connectedWorkers) {
-                if (w.getWorker_id() == id) {
-                    return w;
-                }
-            }
-            return null;
+            return this.connectedWorkers.get(id);
         } finally {
             connectedWorkersLock.unlock();
         }
@@ -208,12 +196,7 @@ public class Server {
     public boolean containsConnectedWorker(int id) {
         connectedWorkersLock.lock();
         try {
-            for (Worker w : this.connectedWorkers) {
-                if (w.getWorker_id() == id) {
-                    return true;
-                }
-            }
-            return false;
+            return this.connectedWorkers.containsKey(id);
         } finally {
             connectedWorkersLock.unlock();
         }
@@ -297,11 +280,8 @@ public class Server {
     public void changeMemoryWorkerPerId(int worker_id, int memory){
         connectedWorkersLock.lock();
         try {
-            for (Worker w : this.connectedWorkers) {
-                if (w.getWorker_id() == worker_id) {
-                    w.setMemory_available(w.getMemory_available() + memory);
-                }
-            }
+            Worker w = this.connectedWorkers.get(worker_id);
+            w.setMemory_available(w.getMemory_available() + memory);
         } finally {
             connectedWorkersLock.unlock();
         }
@@ -323,11 +303,8 @@ public class Server {
     public void decrementNumJobsWorker(int worker_id) {
         connectedWorkersLock.lock();
         try {
-            for (Worker w : this.connectedWorkers) {
-                if (w.getWorker_id() == worker_id) {
-                    w.setNum_jobs(w.getNum_jobs() - 1);
-                }
-            }
+            Worker w = this.connectedWorkers.get(worker_id);
+            w.setNum_jobs(w.getNum_jobs() - 1);
         } finally {
             connectedWorkersLock.unlock();
         }

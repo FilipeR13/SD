@@ -61,7 +61,7 @@ public class WorkerServer {
             while (true) {
                 // Read data from the server
                 Message message = Message.deserialize(in);
-                if (message.getType() == null) {
+                if (message == null) {
                     System.out.println("Server disconnected!");
                     return;
                 }
