@@ -20,16 +20,30 @@ public class JobScheduler implements Runnable{
             lock.lock();
             try {
                 if(!server.getPendingPrograms().isEmpty()) {
-                    ProgramRequest programRequest = server.getPendingPrograms().peek();
 
-                    // Find a worker with enough memory, wait if none are available
-                    List<Worker> availableWorkers = findAvailableWorker(programRequest.getMemory());
-                    while (availableWorkers.isEmpty()) {
-                        availableWorkers = findAvailableWorker(programRequest.getMemory());
+                    //checks if all workers have 0 memory available
+
+                    boolean allWorkersFull = true;
+                    for (Worker worker : server.getConnectedWorkers().values()) {
+                        if (worker.getMemory_available() != 0) {
+                            allWorkersFull = false;
+                            break;
+                        }
                     }
 
-                    // Send the program to the best worker
-                    sendJobToBestWorker(programRequest, availableWorkers);
+                    if (!allWorkersFull) {
+
+                        ProgramRequest programRequest = server.getPendingPrograms().peek();
+
+                        // Find a worker with enough memory, wait if none are available
+                        List<Worker> availableWorkers = findAvailableWorker(programRequest.getMemory());
+                        while (availableWorkers.isEmpty()) {
+                            availableWorkers = findAvailableWorker(programRequest.getMemory());
+                        }
+
+                        // Send the program to the best worker
+                        sendJobToBestWorker(programRequest, availableWorkers);
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
