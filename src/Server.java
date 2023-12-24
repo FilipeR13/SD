@@ -53,7 +53,7 @@ public class Server {
         this.connectedClients = connectedClients;
     }
 
-   public void setPendingPrograms(PriorityQueue<ProgramRequest> pendingPrograms) {
+    public void setPendingPrograms(PriorityQueue<ProgramRequest> pendingPrograms) {
             this.pendingPrograms = pendingPrograms;
     }
 
@@ -317,9 +317,9 @@ public class Server {
         int portWorkers = 9091;
         int id_worker = 1;
         Server server = new Server();
-        Thread jobSchedulerThread = new Thread(new JobScheduler(server));
+        JobScheduler jobs = new JobScheduler(server);
+        Thread jobSchedulerThread = new Thread(jobs);
         jobSchedulerThread.start();
-
         try {
             // Create server sockets
             ServerSocket serverSocketClients = new ServerSocket(portClients);
@@ -330,7 +330,7 @@ public class Server {
 
             // Create separate threads for handling clients and workers
             Thread clientAcceptThread = new Thread(() -> acceptClients(serverSocketClients, server));
-            Thread workerAcceptThread = new Thread(() -> acceptWorkers(serverSocketWorkers, server, id_worker));
+            Thread workerAcceptThread = new Thread(() -> acceptWorkers(serverSocketWorkers, server, id_worker, jobs));
 
             // Start the threads
             clientAcceptThread.start();
@@ -358,12 +358,12 @@ public class Server {
         }
     }
 
-    private static void acceptWorkers(ServerSocket serverSocket, Server server, int id_worker) {
+    private static void acceptWorkers(ServerSocket serverSocket, Server server, int id_worker, JobScheduler jobs) {
         try {
             while (true) {
                 Socket workerSocket = serverSocket.accept();
                 System.out.println("Worker connected from " + workerSocket.getInetAddress());
-                Thread workerThread = new Thread(new WorkerHandler(id_worker, workerSocket, server));
+                Thread workerThread = new Thread(new WorkerHandler(id_worker, workerSocket, server, jobs));
                 workerThread.start();
                 id_worker++;
             }

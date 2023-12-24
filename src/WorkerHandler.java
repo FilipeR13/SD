@@ -5,20 +5,23 @@ public class WorkerHandler implements Runnable {
 
     private Socket workerSocket;
     private Server server;
+    private JobScheduler jobs;
     private int worker_id;
 
     //constructor
 
-    public WorkerHandler(int worker_id, Socket workerSocket, Server server) {
+    public WorkerHandler(int worker_id, Socket workerSocket, Server server, JobScheduler jobs) {
         this.worker_id = worker_id;
         this.workerSocket = workerSocket;
         this.server = server;
+        this.jobs = jobs;
     }
 
     public WorkerHandler() {
         this.worker_id = 0;
         this.workerSocket = null;
         this.server = new Server();
+        this.jobs = new JobScheduler(this.server);
     }
 
     //getters and setters
@@ -70,9 +73,11 @@ public class WorkerHandler implements Runnable {
                         break;
                     case "JOB_DONE":
                         this.handleJobCompleted(in, workerMessage, "JOB_DONE");
+                        this.jobs.setCondition();
                         break;
                     case "JOB_FAILED":
                         this.handleJobCompleted(in,workerMessage,"JOB_FAILED");
+                        this.jobs.setCondition();
                         break;
                     default:
                         out.writeUTF("Invalid action");
