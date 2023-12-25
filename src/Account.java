@@ -3,8 +3,8 @@ public class Account {
     private String password;
 
     public Account() {
-        this.nomeUtilizador = "";
-        this.password = "";
+        this.nomeUtilizador = null;
+        this.password = null;
     }
 
     public Account(String nomeUtilizador, String password) {

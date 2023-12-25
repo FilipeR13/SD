@@ -17,6 +17,7 @@ public class ClientHandler implements Runnable {
 
     public void closeconnectionClient(SafeDataInputStream in, SafeDataOutputStream out, String username) throws IOException {
         // Close the streams and clientSocket
+        System.out.println("Client disconnected!");
         if(username != null) server.removeConnectedClient(username);
         in.close();
         out.close();
@@ -39,7 +40,6 @@ public class ClientHandler implements Runnable {
                 Message clientMessage = Message.deserialize(in);
 
                 if (clientMessage == null) {
-                    System.out.println("Client disconnected!");
                     return;
                 }
                 switch (clientMessage.getType()) {
@@ -69,6 +69,7 @@ public class ClientHandler implements Runnable {
 
     public void handleLogin(SafeDataInputStream in, SafeDataOutputStream out, Message clientMessage) throws IOException {
         String arguments[] = Message.parsePayload(clientMessage.getPayload());
+        if(!server.containsConnectedClient(arguments[0])) server.addConnectedClient(arguments[0],out);
 
         // Check if the user exists and the password is correct
         if (server.containsAccount(arguments[0]) && server.getAccount(arguments[0]).getPassword().equals(arguments[1])) {
@@ -81,7 +82,6 @@ public class ClientHandler implements Runnable {
                 Message message = Message.deserialize(in);
 
                 if (message == null) {
-                    System.out.println("Client disconnected!");
                     return;
                 }
 
