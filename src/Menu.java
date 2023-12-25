@@ -58,18 +58,22 @@ public class Menu {
     }
 
     public int readChoice() {
-        int choice;
+        int choice = -1;
         Scanner sc = new Scanner(System.in);
         System.out.print("Choice: ");
+
         try {
             choice = sc.nextInt();
-        } catch (InputMismatchException e) {
-            choice = -1;
-        }
-        if (choice < 0 || choice > this.options.size()) {
-            choice = -1;
-            System.out.println("INVALID CHOICE!");
+            if (choice < 0 || choice > this.options.size()) {
+                choice = -1;
+                System.out.println("INVALID CHOICE!");
+            }
+        } catch (NoSuchElementException e) {
+            // Handle end-of-file (Ctrl+D or Ctrl+Z)
+            System.out.println("Client disconnecting!");
+            choice = 0;
         }
         return choice;
     }
+
 }

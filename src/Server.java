@@ -8,7 +8,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Server {
     private Map<String, Account> accounts;
     private Map<String, SafeDataOutputStream> connectedClients;
-    private static PriorityQueue<ProgramRequest> pendingPrograms;
+    private  PriorityQueue<ProgramRequest> pendingPrograms;
     //Map for the connectedWorkers with an int as a key and then a tuple of ints for data
     private Map<Integer,Worker> connectedWorkers;
 

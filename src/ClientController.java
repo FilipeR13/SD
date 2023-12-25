@@ -131,6 +131,11 @@ public class ClientController {
         System.out.print("Palavra-Passe:: ");
         credentials[1] = stdin.readLine();
 
+        if(u.getNomeUtilizador() == null){
+            u.setNomeUtilizador(credentials[0]);
+            u.setPassword(credentials[0]);
+        }
+
         // Send login information to the server
         String payload = Message.createPayload(credentials);
         Message.serialize(out,"LOGIN", payload);
