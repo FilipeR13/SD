@@ -73,9 +73,25 @@ public class JobScheduler implements Runnable{
         bestWorkerOut.flush();
 
         ProgramRequest pr2 = this.server.getPendingPrograms().poll();
+        System.out.println("Priority of the program sent: " + pr2.getPriority());
+        updatePriorityPrograms(pr2);
         bestWorker.setMemory_available(bestWorker.getMemory_available() - pr.getMemory());
         bestWorker.setNum_jobs(bestWorker.getNum_jobs() + 1);
 
+    }
+
+    /*
+    update the priority of the programs, it only boosts half the time to ensure that the priority is not too high and the increment is equivalent to a small percentage
+    of the priority of the program that was sent.
+     */
+    private void updatePriorityPrograms(ProgramRequest pr){
+        int priority = (int) (pr.getPriority() * 0.25);
+
+        if(new Random().nextInt(2) == 0){
+            for (ProgramRequest programRequest : this.server.getPendingPrograms()) {
+                programRequest.setPriority(programRequest.getPriority() + priority);
+            }
+        }
     }
 
     //set the condition, used to wake up the thread

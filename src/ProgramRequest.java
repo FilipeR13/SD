@@ -1,8 +1,12 @@
+import java.time.LocalDateTime;
+import java.util.Date;
+
 public class ProgramRequest {
     private String clientUsername;
     private int memory;
     private byte[] file;
     private int pedido_id;
+    private Date date;
     private int priority;
 
     //constructors
@@ -11,6 +15,7 @@ public class ProgramRequest {
         this.pedido_id = 0;
         this.memory = 0;
         this.file = new byte[0];
+        this.date = new Date();
         this.priority = 0;
     }
 
@@ -19,8 +24,8 @@ public class ProgramRequest {
         this.pedido_id = Integer.parseInt(arguments[1]);
         this.memory = Integer.parseInt(arguments[2]);
         this.file = arguments[3].getBytes();
-        //formula that calculates the priority based on the memory and the size of the file
-        this.priority = this.memory + this.file.length;
+        this.date = new Date();
+        this.priority = normalizePriority((double) 1 /((0.9 * this.memory) + (0.1 * this.file.length)) * 1000);
     }
 
     public ProgramRequest(ProgramRequest pr) {
@@ -48,6 +53,10 @@ public class ProgramRequest {
         return file;
     }
 
+    public Date getDate() {
+        return date;
+    }
+
     public int getPriority() {
         return priority;
     }
@@ -68,7 +77,19 @@ public class ProgramRequest {
         this.file = file;
     }
 
+    public void setDate(Date date) {
+        this.date = date;
+    }
+
     public void setPriority(int priority) {
         this.priority = priority;
+    }
+
+    //normalize the priority
+    private int normalizePriority(double rawPriority) {
+        int minPriority = 1;
+        int maxPriority = 10;
+
+        return (int) Math.round((rawPriority * (maxPriority - minPriority)) + minPriority);
     }
 }
