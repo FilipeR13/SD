@@ -10,11 +10,13 @@ public class ClientHandler implements Runnable {
     private Socket clientSocket;
     private Server server;
 
+    //constructor
     public ClientHandler(Socket clientSocket, Server server) {
         this.clientSocket = clientSocket;
         this.server = server;
     }
 
+    //function to close the connection with the client
     public void closeconnectionClient(SafeDataInputStream in, SafeDataOutputStream out, String username) throws IOException {
         // Close the streams and clientSocket
         System.out.println("Client disconnected!");
@@ -24,6 +26,7 @@ public class ClientHandler implements Runnable {
         this.clientSocket.close();
     }
 
+    //main function of the thread, receives the request from the client and calls the respective function
     public void run(){
         SafeDataInputStream in = null;
         SafeDataOutputStream out = null;
@@ -67,7 +70,10 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    //function to handle the login of the client
     public void handleLogin(SafeDataInputStream in, SafeDataOutputStream out, Message clientMessage) throws IOException {
+
+        // Get the username and password from the payload
         String arguments[] = Message.parsePayload(clientMessage.getPayload());
         if(!server.containsConnectedClient(arguments[0])) server.addConnectedClient(arguments[0],out);
 
@@ -85,6 +91,7 @@ public class ClientHandler implements Runnable {
                     return;
                 }
 
+                // Handle the client's request
                 switch (message.getType()) {
                     case "SEND_PROGRAM":
                         String values[] = Message.parsePayload(message.getPayload());
@@ -117,6 +124,8 @@ public class ClientHandler implements Runnable {
     }
 
     public String handleRegister(SafeDataInputStream in, SafeDataOutputStream out, Message clientMessage) throws IOException {
+
+        // Get the username and password from the payload
         String arguments[] = Message.parsePayload(clientMessage.getPayload());
 
         // Check if the username already exists
@@ -128,7 +137,7 @@ public class ClientHandler implements Runnable {
             out.writeUTF("Registration successful");
             out.flush();
 
-            // Store the connected client's PrintWriter
+            // Store the connected client's username and output stream
             server.addConnectedClient(arguments[0], out);
         } else {
             out.writeUTF("Username already exists");

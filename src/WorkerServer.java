@@ -6,7 +6,7 @@ public class WorkerServer {
     private int max_memory;
     private int memory_used;
 
-    //constructor
+    //constructors
 
     public WorkerServer() {
         this.max_memory = 1000;
@@ -38,14 +38,16 @@ public class WorkerServer {
 
     // server socket in which the server listens for connections
 
-    private static final String SERVER_IP = "localhost";  // Replace with your Main Server's IP address
-    private static final int SERVER_PORT = 9091;  // Replace with your Main Server's port
+    private static final String SERVER_IP = "localhost";
+    private static final int SERVER_PORT = 9091;
 
+    //send the memory info to the server
     public void sendMemoryInfo(SafeDataOutputStream out) throws IOException {
         Message.serialize(out,"MEMORY_INFO", this.max_memory + ";" + this.memory_used);
         out.flush();
     }
 
+    //main function of the worker, connects to the server and waits for requests
     public static void main(String[] args) throws IOException {
         WorkerServer workerServer = new WorkerServer();
         try {
@@ -58,6 +60,7 @@ public class WorkerServer {
             SafeDataOutputStream out = new SafeDataOutputStream(workerSocket.getOutputStream());
             workerServer.sendMemoryInfo(out);
 
+            // Keep the connection open for ongoing communication
             while (true) {
                 // Read data from the server
                 Message message = Message.deserialize(in);

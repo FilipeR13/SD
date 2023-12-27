@@ -10,10 +10,12 @@ public class JobScheduler implements Runnable{
     private final Lock lock = new ReentrantLock();
     private final Condition conn = lock.newCondition();
 
+    //constructor
     public JobScheduler(Server server) {
         this.server = server;
     }
 
+    //main function of the thread, receives the request from the client and sends it to the best worker
     public void run() {
         while (true) {
             lock.lock();
@@ -43,16 +45,17 @@ public class JobScheduler implements Runnable{
         }
     }
 
+    //get the list of workers with enough memory
     private List<Worker> findAvailableWorker(int requiredMemory) {
         return server.getConnectedWorkers().values().stream()
                         .filter(worker -> worker.getMemory_available() >= requiredMemory)
                         .toList();
     }
 
+    //send the program to the best worker
     private void sendJobToBestWorker(ProgramRequest pr, List<Worker> availableWorkers) throws IOException {
-        // go through all the workers and find the one with the least amount of jobs being executed
-        // if there are more than one worker with the same amount of jobs being executed, choose the one with the most memory available
 
+        //find the best worker, the one with the least number of jobs and the most memory available
         Worker bestWorker = availableWorkers.get(0);
         for (Worker worker : availableWorkers) {
             if (worker.getNum_jobs() < bestWorker.getNum_jobs()) {
@@ -65,7 +68,6 @@ public class JobScheduler implements Runnable{
         }
 
         // send the program to the best worker
-
         SafeDataOutputStream bestWorkerOut = bestWorker.getOut();
         Message.serialize(bestWorkerOut,"SEND_PROGRAM",pr.getClientUsername() + ";" + pr.getPedido_id() + ";" + pr.getMemory() + ";" + new String(pr.getFile()));
         bestWorkerOut.flush();
@@ -76,6 +78,7 @@ public class JobScheduler implements Runnable{
 
     }
 
+    //set the condition, used to wake up the thread
     public void setCondition() {
         this.lock.lock();
         try {

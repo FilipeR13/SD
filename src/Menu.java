@@ -6,10 +6,13 @@ import java.util.*;
 
 
 public class Menu {
+
+    //interface for the handlers
     public interface Handler {
         public void execute() throws JobFunctionException, IOException;
     }
 
+    //interface for the preconditions
     public interface PreCondition {
         public boolean condition();
     }
@@ -18,6 +21,7 @@ public class Menu {
     private List<PreCondition> preConditions;
     private List<String> options;
 
+    //constructor
     public Menu(String[] options) {
         this.options = Arrays.asList(options);
         this.handlers = new ArrayList<>();
@@ -28,6 +32,7 @@ public class Menu {
         });
     }
 
+    //main function of the menu, shows the menu and reads the choice of the user
     public void run() throws JobFunctionException, IOException {
         int choice;
         do {
@@ -41,6 +46,7 @@ public class Menu {
         } while (choice != 0);
     }
 
+    //set the handler and the precondition of the option
     public void setHandler(int i, Handler h) {
         this.handlers.set(i - 1, h);
     }
@@ -49,6 +55,7 @@ public class Menu {
         this.preConditions.set(i - 1, b);
     }
 
+    //show the menu
     public void showMenu() {
         System.out.println("-----MENU-----");
         for (int i = 0; i < this.options.size(); i++) {
@@ -57,6 +64,7 @@ public class Menu {
         System.out.println("0 - EXIT");
     }
 
+    //read the choice of the user, if it's invalid, returns -1 and shows a message, if it's valid, returns the choice. If the user disconnects, returns 0
     public int readChoice() {
         int choice = -1;
         Scanner sc = new Scanner(System.in);

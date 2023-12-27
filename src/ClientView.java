@@ -5,10 +5,12 @@ import java.io.IOException;
 public class ClientView {
     private ClientController client;
 
+    //constructor
     public ClientView(ClientController client) {
         this.client = client;
     }
 
+    //main menu of the client
     public void mainMenu() throws JobFunctionException, IOException {
         Menu menuPrincipal = new Menu(new String[]{
                 "Login",
@@ -20,6 +22,7 @@ public class ClientView {
         menuPrincipal.run();
     }
 
+    //options menu of the client
     public void optionsMenu() throws JobFunctionException, IOException {
 
         Menu optionsMenu = new Menu(new String[]{

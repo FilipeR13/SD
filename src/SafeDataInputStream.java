@@ -9,11 +9,13 @@ public class SafeDataInputStream {
     private final DataInputStream dataInputStream;
     private final Lock lock;
 
+    // Constructor
     public SafeDataInputStream(InputStream inputStream) {
         this.dataInputStream = new DataInputStream(inputStream);
         this.lock = new ReentrantLock();
     }
 
+    // functions to read data from the stream
     public int readInt() throws IOException {
         lock.lock();
         try {

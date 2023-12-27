@@ -5,6 +5,7 @@ public class ProgramRequest {
     private int pedido_id;
     private int priority;
 
+    //constructors
     public ProgramRequest(){
         this.clientUsername = "";
         this.pedido_id = 0;
@@ -30,6 +31,7 @@ public class ProgramRequest {
         this.priority = pr.getPriority();
     }
 
+    //getters and setters
     public String getClientUsername() {
         return clientUsername;
     }

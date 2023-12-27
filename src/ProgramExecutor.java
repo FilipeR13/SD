@@ -13,13 +13,14 @@ public class ProgramExecutor implements Runnable {
     private SafeDataOutputStream out;
     private Lock l = new ReentrantLock();
 
+    //constructor
     public ProgramExecutor(ProgramRequest pr, WorkerServer server, SafeDataOutputStream out) {
         this.pr = pr;
         this.server = server;
         this.out = out;
     }
 
-
+    //main function of the thread, executes the program and sends the result to the server
     public void run() {
         //set the memory used by the worker
         server.setMemory_used(server.getMemory_used() + pr.getMemory());
@@ -36,6 +37,8 @@ public class ProgramExecutor implements Runnable {
                 }
                 System.err.println("success, returned " + output.length + " bytes");
             }
+
+        //if the program fails, send the error message to the server
         } catch (JobFunctionException e) {
             System.err.println("job failed: code=" + e.getCode() + " message=" + e.getMessage());
             if (out != null) {

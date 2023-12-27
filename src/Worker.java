@@ -7,7 +7,7 @@ public class Worker {
     private int memory_available;
     private int num_jobs;
 
-    //constructor
+    //constructors
 
     public Worker(int worker_id, SafeDataOutputStream out, int memory_available) {
         this.out = out;

@@ -2,6 +2,7 @@ public class Account {
     private String nomeUtilizador;
     private String password;
 
+    //constructors
     public Account() {
         this.nomeUtilizador = null;
         this.password = null;
@@ -11,6 +12,8 @@ public class Account {
         this.nomeUtilizador = nomeUtilizador;
         this.password = password;
     }
+
+    //getters and setters
 
     public String getNomeUtilizador() {
         return nomeUtilizador;

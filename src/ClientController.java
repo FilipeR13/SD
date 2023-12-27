@@ -14,31 +14,35 @@ public class ClientController {
         private Account u;
         private SafeDataInputStream in;
 
+
+        // constructor
         public ReceiveResponse(Lock l, Account u, SafeDataInputStream in){
             this.l = l;
             this.u = u;
             this.in = in;
         }
 
+        //write the result in the respective file
         public void sendToFile(String username, String result, String id){
             try {
                 //create file if it doesn't exist
                 File file = new File(getAbsolutePath(),username + ".txt");
                 FileWriter writer = new FileWriter(file, true);
-                writer.write(id + ": " + result + "\n");
+                writer.write("Id: " + id + " -> " + result + "\n");
                 writer.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
-
+        //get the result from the server and call the function to write it in the file
         public void getResult(String response, String id){
             System.out.println("Server response: " + id + " " + response);
 
             sendToFile(u.getNomeUtilizador(),response, id);
         }
 
+        //main function of the thread, receives the response from the server and calls the respective function
         public void run() {
             l.lock();
             try {
@@ -54,8 +58,7 @@ public class ClientController {
 
                     String arguments[] = Message.parsePayload(serverMessage.getPayload());
 
-                    // do a switch case intead
-
+                    //check the type of the message and call the respective function
                     switch (serverMessage.getType()) {
                         case "JOB_DONE":
                             getResult(arguments[3],arguments[2]);
@@ -88,15 +91,18 @@ public class ClientController {
     private int pedido_id = 1;
     private Lock l = new ReentrantLock();
 
+    // constructor
     public ClientController(Account u) {
         this.u = u;
     }
 
+    //get the absolute path of the folder "resultados"
     public static String getAbsolutePath(){
         String currentWorkingDirectory = System.getProperty("user.dir");
         return currentWorkingDirectory + "/resultados";
     }
 
+    //establish the connection with the server
     public void establishConnection() {
         try {
             socket = new Socket("localhost", 9090);
@@ -108,33 +114,32 @@ public class ClientController {
         }
     }
 
+    //close the connection with the server
     public void closeConnection() throws IOException {
         // close the connection to the server
         try {
             in.close();
             out.close();
+            stdin.close();
             socket.close();
         } catch (SocketException e) {
             e.printStackTrace();
         }
 
-        //erase client results file from the folder "resultados"
-
+        //erase the file with the results
         File file = new File(getAbsolutePath(),u.getNomeUtilizador() + ".txt");
         file.delete();
     }
 
+    //function that sends the login information to the server and receives the response
     public void login() throws IOException {
+
+        // Get login information from the user
         String[] credentials = new String[2];
         System.out.print("Nome de Utilizador :: ");
         credentials[0] = stdin.readLine();
         System.out.print("Palavra-Passe:: ");
         credentials[1] = stdin.readLine();
-
-        if(u.getNomeUtilizador() == null){
-            u.setNomeUtilizador(credentials[0]);
-            u.setPassword(credentials[0]);
-        }
 
         // Send login information to the server
         String payload = Message.createPayload(credentials);
@@ -148,6 +153,12 @@ public class ClientController {
 
             // Check if login was successful
             if (response.equals("Login successful")) {
+                if(u.getNomeUtilizador() == null){
+                    u.setNomeUtilizador(credentials[0]);
+                    u.setPassword(credentials[0]);
+                }
+
+                // Create a new view for the client
                 ClientView view = new ClientView(this);
                 view.optionsMenu();
             }
@@ -158,7 +169,10 @@ public class ClientController {
         }
     }
 
+    //function that sends the register information to the server and receives the response
     public void register() throws IOException {
+
+        // Get registration information from the user
         String[] credentials = new String[2];
         System.out.print("Nome de Utilizador :: ");
         credentials[0] = stdin.readLine();
@@ -181,19 +195,22 @@ public class ClientController {
         }
     }
 
+    //function that sends the program to the server and receives the response
     public void sendProgram() throws IOException {
+
+        // Get program information from the user
         System.out.print("Path do ficheiro :: ");
         String file_name = stdin.readLine();
 
+        // Get memory information from the user
         System.out.print("Memória para o programa (MB):: ");
         String memoria = stdin.readLine();
 
-
+        // Read file into byte array and closing the file input stream to avoid memory leakage
         File file_execute = new File(file_name);
         FileInputStream read_file = new FileInputStream(file_execute);
         byte[] array = new byte[(int) file_execute.length()];
 
-        // read file into bytes[] and closing the file input stream to avoid memory leakage
         read_file.read(array);
         read_file.close();
 
@@ -202,13 +219,16 @@ public class ClientController {
         out.flush();
         this.pedido_id++;
 
+        // Receive a response from the server
         Thread t = new Thread(new ReceiveResponse(l,this.u,in));
         t.start();
     }
 
+    //function that sends the request for the server status to the server and receives the response
     public void serverAvailability() throws IOException {
         Message.serialize(out,"SERVER_AVAILABILITY", "");
         out.flush();
+        // Receive a response from the server
         Thread t = new Thread(new ReceiveResponse(l,this.u,in));
         t.start();
     }

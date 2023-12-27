@@ -8,7 +8,7 @@ public class WorkerHandler implements Runnable {
     private JobScheduler jobs;
     private int worker_id;
 
-    //constructor
+    //constructors
 
     public WorkerHandler(int worker_id, Socket workerSocket, Server server, JobScheduler jobs) {
         this.worker_id = worker_id;
@@ -50,6 +50,7 @@ public class WorkerHandler implements Runnable {
         this.server = server;
     }
 
+    //main function of the thread, handles the communication with the worker
     public void run() {
         SafeDataInputStream in = null;
         SafeDataOutputStream out = null;
@@ -67,6 +68,7 @@ public class WorkerHandler implements Runnable {
                     System.out.println("Worker disconnected!");
                     return;
                 }
+                // Handle the message
                 switch (workerMessage.getType()) {
                     case "MEMORY_INFO":
                         this.handleMemoryInfo(in,out,workerMessage);
@@ -88,7 +90,7 @@ public class WorkerHandler implements Runnable {
             e.printStackTrace();
         } finally {
             try {
-                // Close the streams and clientSocket
+                // Close the streams and the socket
                 server.removeConnectedWorker(worker_id);
                 in.close();
                 out.close();
@@ -100,6 +102,7 @@ public class WorkerHandler implements Runnable {
         }
     }
 
+    //handles the message sent by the worker when it finishes a job
     public void handleJobCompleted(SafeDataInputStream in, Message workerMessage, String message_type) throws IOException {
         String arguments[] = Message.parsePayload(workerMessage.getPayload());
         server.changeMemoryWorkerPerId(worker_id,Integer.parseInt(arguments[1]));
@@ -111,6 +114,7 @@ public class WorkerHandler implements Runnable {
         clientOut.flush();
     }
 
+    //handles the message sent by the worker when it connects to the server
     public void handleMemoryInfo(SafeDataInputStream in, SafeDataOutputStream out, Message workerMessage) throws IOException {
         String arguments[] = Message.parsePayload(workerMessage.getPayload());
 

@@ -9,10 +9,7 @@ public class Server {
     private Map<String, Account> accounts;
     private Map<String, SafeDataOutputStream> connectedClients;
     private  PriorityQueue<ProgramRequest> pendingPrograms;
-    //Map for the connectedWorkers with an int as a key and then a tuple of ints for data
     private Map<Integer,Worker> connectedWorkers;
-
-    private final Lock l = new ReentrantLock();
 
     private final Lock accountsLock = new ReentrantLock();
     private final Lock connectedClientsLock = new ReentrantLock();
@@ -277,6 +274,8 @@ public class Server {
             connectedWorkersLock.unlock();
         }
     }
+
+    //function that changes the memory of a worker
     public void changeMemoryWorkerPerId(int worker_id, int memory){
         connectedWorkersLock.lock();
         try {
@@ -287,8 +286,7 @@ public class Server {
         }
     }
 
-    // Methods for getting the element of the queue (poll) with locks
-
+    //method that returns the first pending program
     public ProgramRequest pollPendingProgram() {
         pendingProgramsLock.lock();
         try {
@@ -299,7 +297,6 @@ public class Server {
     }
 
     // decrement number of jobs of a worker
-
     public void decrementNumJobsWorker(int worker_id) {
         connectedWorkersLock.lock();
         try {
@@ -310,8 +307,7 @@ public class Server {
         }
     }
 
-    // main method
-
+    // main method of the server, creates the server sockets and the threads for handling clients and workers
     public static void main(String[] args) throws InterruptedException{
         int portClients = 9090;
         int portWorkers = 9091;
@@ -344,6 +340,8 @@ public class Server {
             e.printStackTrace();
         }
     }
+
+    // methods for accepting clients and workers
 
     private static void acceptClients(ServerSocket serverSocket, Server server) {
         try {
