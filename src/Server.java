@@ -8,7 +8,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Server {
     private Map<String, Account> accounts;
     private Map<String, SafeDataOutputStream> connectedClients;
-    private  PriorityQueue<ProgramRequest> pendingPrograms;
+    private  MyPriorityQueue<ProgramRequest> pendingPrograms;
     private Map<Integer,Worker> connectedWorkers;
 
     private final Lock accountsLock = new ReentrantLock();
@@ -20,7 +20,7 @@ public class Server {
     public Server(){
         this.accounts = new HashMap<>();
         this.connectedClients = new HashMap<>();
-        this.pendingPrograms = new PriorityQueue<>(new ProgramRequestComparator());
+        this.pendingPrograms = new MyPriorityQueue<>(new ProgramRequestComparator());
         this.connectedWorkers = new HashMap<>();
     }
 
@@ -34,7 +34,7 @@ public class Server {
         return connectedClients;
     }
 
-    public PriorityQueue<ProgramRequest> getPendingPrograms() {
+    public MyPriorityQueue<ProgramRequest> getPendingPrograms() {
         return pendingPrograms;
     }
 
@@ -43,19 +43,39 @@ public class Server {
     }
 
     public void setAccounts(Map<String, Account> accounts) {
-        this.accounts = accounts;
+        accountsLock.lock();
+        try {
+            this.accounts = accounts;
+        } finally {
+            accountsLock.unlock();
+        }
     }
 
     public void setConnectedClients(Map<String, SafeDataOutputStream> connectedClients) {
-        this.connectedClients = connectedClients;
+        connectedClientsLock.lock();
+        try {
+            this.connectedClients = connectedClients;
+        } finally {
+            connectedClientsLock.unlock();
+        }
     }
 
-    public void setPendingPrograms(PriorityQueue<ProgramRequest> pendingPrograms) {
+    public void setPendingPrograms(MyPriorityQueue<ProgramRequest> pendingPrograms) {
+        pendingProgramsLock.lock();
+        try {
             this.pendingPrograms = pendingPrograms;
+        } finally {
+            pendingProgramsLock.unlock();
+        }
     }
 
-    public void setConnectedWorkers(Map<Integer,Worker> connectedWorkers) {
-        this.connectedWorkers = connectedWorkers;
+    public void setConnectedWorkers(Map<Integer, Worker> connectedWorkers) {
+        connectedWorkersLock.lock();
+        try {
+            this.connectedWorkers = connectedWorkers;
+        } finally {
+            connectedWorkersLock.unlock();
+        }
     }
 
     // adds and removes from the structures
