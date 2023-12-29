@@ -73,7 +73,6 @@ public class JobScheduler implements Runnable{
         bestWorkerOut.flush();
 
         ProgramRequest pr2 = this.server.getPendingPrograms().poll();
-        System.out.println("Priority of the program sent: " + pr2.getPriority());
         updatePriorityPrograms(pr2);
         bestWorker.setMemory_available(bestWorker.getMemory_available() - pr.getMemory());
         bestWorker.setNum_jobs(bestWorker.getNum_jobs() + 1);

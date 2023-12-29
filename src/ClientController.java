@@ -13,13 +13,15 @@ public class ClientController {
         private Lock l;
         private Account u;
         private SafeDataInputStream in;
+        private ClientController clientc;
 
 
         // constructor
-        public ReceiveResponse(Lock l, Account u, SafeDataInputStream in){
+        public ReceiveResponse(Lock l, Account u, SafeDataInputStream in, ClientController clientc){
             this.l = l;
             this.u = u;
             this.in = in;
+            this.clientc = clientc;
         }
 
         //write the result in the respective file
@@ -99,7 +101,7 @@ public class ClientController {
     //get the absolute path of the folder "resultados"
     public static String getAbsolutePath(){
         String currentWorkingDirectory = System.getProperty("user.dir");
-        return currentWorkingDirectory + "/resultados";
+        return currentWorkingDirectory + "/src/resultados";
     }
 
     //establish the connection with the server
@@ -155,7 +157,7 @@ public class ClientController {
             if (response.equals("Login successful")) {
                 if(u.getNomeUtilizador() == null){
                     u.setNomeUtilizador(credentials[0]);
-                    u.setPassword(credentials[0]);
+                    u.setPassword(credentials[1]);
                 }
 
                 // Create a new view for the client
@@ -220,7 +222,7 @@ public class ClientController {
         this.pedido_id++;
 
         // Receive a response from the server
-        Thread t = new Thread(new ReceiveResponse(l,this.u,in));
+        Thread t = new Thread(new ReceiveResponse(l,this.u,in,this));
         t.start();
     }
 
@@ -229,7 +231,7 @@ public class ClientController {
         Message.serialize(out,"SERVER_AVAILABILITY", "");
         out.flush();
         // Receive a response from the server
-        Thread t = new Thread(new ReceiveResponse(l,this.u,in));
+        Thread t = new Thread(new ReceiveResponse(l,this.u,in,this));
         t.start();
     }
 }

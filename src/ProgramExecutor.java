@@ -50,11 +50,9 @@ public class ProgramExecutor implements Runnable {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("Error sending message to server");
         } finally {
             server.setMemory_used(server.getMemory_used() - pr.getMemory());
         }
     }
-
-
 }
