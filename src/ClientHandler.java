@@ -41,16 +41,21 @@ public class ClientHandler implements Runnable {
             while (true) {
                 // Read data from the client
                 Message clientMessage = Message.deserialize(in);
+                String arguments[] = null;
+                if(clientMessage != null){
+                    arguments = Message.parsePayload(clientMessage.getPayload());
+                    username = arguments[0];
+                }
 
                 if (clientMessage == null) {
                     return;
                 }
                 switch (clientMessage.getType()) {
                     case "LOGIN":
-                        this.handleLogin(in, out, clientMessage);
+                        this.handleLogin(in, out, arguments);
                         break;
                     case "REGISTER":
-                        username = this.handleRegister(in, out, clientMessage);
+                        this.handleRegister(in, out, arguments);
                         break;
                     default:
                         out.writeUTF("Invalid action");
@@ -71,16 +76,14 @@ public class ClientHandler implements Runnable {
     }
 
     //function to handle the login of the client
-    public void handleLogin(SafeDataInputStream in, SafeDataOutputStream out, Message clientMessage) throws IOException {
-
-        // Get the username and password from the payload
-        String arguments[] = Message.parsePayload(clientMessage.getPayload());
-        if(!server.containsConnectedClient(arguments[0])) server.addConnectedClient(arguments[0],out);
+    public void handleLogin(SafeDataInputStream in, SafeDataOutputStream out, String []arguments) throws IOException {
 
         // Check if the user exists and the password is correct
-        if (server.containsAccount(arguments[0]) && server.getAccount(arguments[0]).getPassword().equals(arguments[1])) {
+        if (server.containsAccount(arguments[0]) && server.getAccount(arguments[0]).getPassword().equals(arguments[1]) && !server.containsConnectedClient(arguments[0])) {
             out.writeUTF("Login successful");
             out.flush();
+            // Store the connected client's username and output stream
+            server.addConnectedClient(arguments[0], out);
 
             // Keep the connection open for ongoing communication
             while (true) {
@@ -105,7 +108,7 @@ public class ClientHandler implements Runnable {
                                 for(Worker w : server.getConnectedWorkers().values()) {
                                     if(w.getMemory_available() > max_memory_available) max_memory_available = w.getMemory_available();
                                 }
-                                Message.serialize(out, "SERVER_STATUS",max_memory_available + ";" + server.sizePendingPrograms());
+                                Message.serialize(out, "SERVER_STATUS",max_memory_available + "\t" + server.sizePendingPrograms());
                                 out.flush();
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -123,10 +126,7 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public String handleRegister(SafeDataInputStream in, SafeDataOutputStream out, Message clientMessage) throws IOException {
-
-        // Get the username and password from the payload
-        String arguments[] = Message.parsePayload(clientMessage.getPayload());
+    public void handleRegister(SafeDataInputStream in, SafeDataOutputStream out, String []arguments) throws IOException {
 
         // Check if the username already exists
         if (!server.containsAccount(arguments[0])) {
@@ -136,13 +136,9 @@ public class ClientHandler implements Runnable {
             server.addAccount(arguments[0],newAccount);
             out.writeUTF("Registration successful");
             out.flush();
-
-            // Store the connected client's username and output stream
-            server.addConnectedClient(arguments[0], out);
         } else {
             out.writeUTF("Username already exists");
             out.flush();
         }
-        return arguments[0];
     }
 }

@@ -27,13 +27,13 @@ public class Message {
         this.payload = payload;
     }
 
-    // creates the payload of the message with the given array of strings
+    // creates the payload of the message with the given array of strings, the payload is a string with the arguments separated by a tab
     public static String createPayload(String[] args) {
         String payload = "";
         for (int i = 0; i < args.length; i++) {
             payload += args[i];
             if (i != args.length - 1) {
-                payload += ";";
+                payload += "\t";
             }
         }
         return payload;
@@ -41,7 +41,7 @@ public class Message {
 
     // takes the payload of the message and returns an array of strings
     public static String[] parsePayload(String payload) {
-        return payload.split(";");
+        return payload.split("\t");
     }
 
     // serialize and deserialize

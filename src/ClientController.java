@@ -215,7 +215,7 @@ public class ClientController {
         read_file.close();
 
         // Send byte array to the server
-        Message.serialize(out, "SEND_PROGRAM", u.getNomeUtilizador() + ";" + this.pedido_id + ";" + memoria + ";" + Arrays.toString(array));
+        Message.serialize(out, "SEND_PROGRAM", u.getNomeUtilizador() + "\t" + this.pedido_id + "\t" + memoria + "\t" + Arrays.toString(array));
         out.flush();
         this.pedido_id++;
 

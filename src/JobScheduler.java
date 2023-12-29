@@ -69,7 +69,7 @@ public class JobScheduler implements Runnable{
 
         // send the program to the best worker
         SafeDataOutputStream bestWorkerOut = bestWorker.getOut();
-        Message.serialize(bestWorkerOut,"SEND_PROGRAM",pr.getClientUsername() + ";" + pr.getPedido_id() + ";" + pr.getMemory() + ";" + new String(pr.getFile()));
+        Message.serialize(bestWorkerOut,"SEND_PROGRAM",pr.getClientUsername() + "\t" + pr.getPedido_id() + "\t" + pr.getMemory() + "\t" + new String(pr.getFile()));
         bestWorkerOut.flush();
 
         ProgramRequest pr2 = this.server.getPendingPrograms().poll();

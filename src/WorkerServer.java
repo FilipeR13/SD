@@ -43,7 +43,7 @@ public class WorkerServer {
 
     //send the memory info to the server
     public void sendMemoryInfo(SafeDataOutputStream out) throws IOException {
-        Message.serialize(out,"MEMORY_INFO", this.max_memory + ";" + this.memory_used);
+        Message.serialize(out,"MEMORY_INFO", this.max_memory + "\t" + this.memory_used);
         out.flush();
     }
 

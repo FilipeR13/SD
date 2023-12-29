@@ -30,7 +30,7 @@ public class ProgramExecutor implements Runnable {
             if (out != null) {
                 l.lock();
                 try{
-                    Message.serialize(out,"JOB_DONE", pr.getClientUsername() + ";" + pr.getMemory() + ";" + pr.getPedido_id() + ";" + Arrays.toString(output));
+                    Message.serialize(out,"JOB_DONE", pr.getClientUsername() + "\t" + pr.getMemory() + "\t" + pr.getPedido_id() + "\t" + Arrays.toString(output));
                     out.flush();
                 }finally {
                     l.unlock();
@@ -43,7 +43,7 @@ public class ProgramExecutor implements Runnable {
             System.err.println("job failed: code=" + e.getCode() + " message=" + e.getMessage());
             if (out != null) {
                 try {
-                    Message.serialize(out,"JOB_FAILED",pr.getClientUsername() + ";" + pr.getMemory() + ";" + pr.getPedido_id() + ";" + e.getCode() + ";" + e.getMessage());
+                    Message.serialize(out,"JOB_FAILED",pr.getClientUsername() + "\t" + pr.getMemory() + "\t" + pr.getPedido_id() + "\t" + e.getCode() + "\t" + e.getMessage());
                     out.flush();
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
