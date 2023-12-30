@@ -124,7 +124,9 @@ public class WorkerHandler implements Runnable {
     //handles the message sent by the worker when it connects to the server
     public void handleMemoryInfo(SafeDataInputStream in, SafeDataOutputStream out, Message workerMessage) throws IOException {
         String arguments[] = Message.parsePayload(workerMessage.getPayload());
-
+        if(server.getMax_memory_workers() < Integer.parseInt(arguments[0])) {
+            server.setMax_memory_workers(Integer.parseInt(arguments[0]));
+        }
         server.addConnectedWorker(new Worker(this.worker_id, out, Integer.parseInt(arguments[0]) - Integer.parseInt(arguments[1])));
     }
 }

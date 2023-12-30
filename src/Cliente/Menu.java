@@ -73,7 +73,13 @@ public class Menu {
         System.out.print("Choice: ");
 
         try {
-            choice = sc.nextInt();
+            if (!sc.hasNextInt()) {
+                choice = -1;
+                sc.next();
+            }
+            else{
+                choice = sc.nextInt();
+            }
             if (choice < 0 || choice > this.options.size()) {
                 choice = -1;
                 System.out.println("INVALID CHOICE!");

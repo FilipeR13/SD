@@ -16,6 +16,7 @@ public class Server {
     private Map<String, SafeDataOutputStream> connectedClients;
     private MyPriorityQueue<ProgramRequest> pendingPrograms;
     private Map<Integer, Worker> connectedWorkers;
+    private int max_memory_workers;
 
     private final Lock accountsLock = new ReentrantLock();
     private final Lock connectedClientsLock = new ReentrantLock();
@@ -28,6 +29,7 @@ public class Server {
         this.connectedClients = new HashMap<>();
         this.pendingPrograms = new MyPriorityQueue<>(new ProgramRequestComparator());
         this.connectedWorkers = new HashMap<>();
+        this.max_memory_workers = 0;
     }
 
     // getters and setters
@@ -46,6 +48,14 @@ public class Server {
 
     public Map<Integer, Worker> getConnectedWorkers() {
         return connectedWorkers;
+    }
+
+    public int getMax_memory_workers() {
+        return max_memory_workers;
+    }
+
+    public void setMax_memory_workers(int max_memory_workers) {
+        this.max_memory_workers = max_memory_workers;
     }
 
     public void setAccounts(Map<String, Account> accounts) {

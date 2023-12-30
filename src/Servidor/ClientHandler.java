@@ -103,7 +103,7 @@ public class ClientHandler implements Runnable {
                     case "SEND_PROGRAM":
                         String values[] = Message.parsePayload(message.getPayload());
                         ProgramRequest pr = new ProgramRequest(values);
-                        server.addPendingProgram(pr);
+                        if(server.getMax_memory_workers() >= pr.getMemory()) server.addPendingProgram(pr);
                         break;
                     case "SERVER_AVAILABILITY":
                         new Thread(() -> {
