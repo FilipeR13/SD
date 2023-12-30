@@ -7,16 +7,23 @@ import Servidor.ProgramRequest;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class WorkerServer {
 
     private int max_memory;
     private int memory_used;
+    private static Lock l = new ReentrantLock();
 
     //constructors
 
     public WorkerServer() {
-        this.max_memory = 1000;
+        this.memory_used = 0;
+    }
+
+    public WorkerServer(String max_memory) {
+        this.max_memory = Integer.parseInt(max_memory);
         this.memory_used = 0;
     }
 
@@ -56,7 +63,7 @@ public class WorkerServer {
 
     //main function of the worker, connects to the server and waits for requests
     public static void main(String[] args) throws IOException {
-        WorkerServer workerServer = new WorkerServer();
+        WorkerServer workerServer = new WorkerServer(args[0]);
         try {
             // Connect to the Main Server.Server
             Socket workerSocket = new Socket(SERVER_IP, SERVER_PORT);
@@ -78,7 +85,7 @@ public class WorkerServer {
                 if(message.getType().equals("SEND_PROGRAM")) {
                     String arguments[] = Message.parsePayload(message.getPayload());
                     ProgramRequest pr = new ProgramRequest(arguments);
-                    Thread t = new Thread(new ProgramExecutor(pr, workerServer,out));
+                    Thread t = new Thread(new ProgramExecutor(pr, workerServer,out,l));
                     t.start();
                 }
                 else {

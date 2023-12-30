@@ -16,13 +16,14 @@ public class ProgramExecutor implements Runnable {
     private ProgramRequest pr;
     private WorkerServer server;
     private SafeDataOutputStream out;
-    private Lock l = new ReentrantLock();
+    private Lock l;
 
     //constructor
-    public ProgramExecutor(ProgramRequest pr, WorkerServer server, SafeDataOutputStream out) {
+    public ProgramExecutor(ProgramRequest pr, WorkerServer server, SafeDataOutputStream out, Lock l) {
         this.pr = pr;
         this.server = server;
         this.out = out;
+        this.l = l;
     }
 
     //main function of the thread, executes the program and sends the result to the server
@@ -47,11 +48,16 @@ public class ProgramExecutor implements Runnable {
         } catch (JobFunctionException e) {
             System.err.println("job failed: code=" + e.getCode() + " message=" + e.getMessage());
             if (out != null) {
-                try {
-                    Message.serialize(out,"JOB_FAILED",pr.getClientUsername() + "\t" + pr.getMemory() + "\t" + pr.getPedido_id() + "\t" + e.getCode() + "\t" + e.getMessage());
-                    out.flush();
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
+                l.lock();
+                try{
+                    try {
+                        Message.serialize(out,"JOB_FAILED",pr.getClientUsername() + "\t" + pr.getMemory() + "\t" + pr.getPedido_id() + "\t" + e.getCode() + "\t" + e.getMessage());
+                        out.flush();
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }finally {
+                    l.unlock();
                 }
             }
         } catch (IOException e) {

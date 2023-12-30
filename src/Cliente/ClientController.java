@@ -42,13 +42,6 @@ public class ClientController {
             }
         }
 
-        //get the result from the server and call the function to write it in the file
-        public void getResult(String response, String id){
-            System.out.println("Program num. " + id + " was executed successfully!");
-
-            sendToFile(u.getNomeUtilizador(),response, id);
-        }
-
         //main function of the thread, receives the response from the server and calls the respective function
         public void run() {
             l.lock();
@@ -68,13 +61,12 @@ public class ClientController {
                     //check the type of the message and call the respective function
                     switch (serverMessage.getType()) {
                         case "JOB_DONE":
-                            getResult(arguments[3],arguments[2]);
+                            sendToFile(u.getNomeUtilizador(), arguments[3], arguments[2]);
                             break;
                         case "SERVER_STATUS":
                             System.out.println("The server has " + arguments[0] + " MB of memory left and there are currently " + arguments[1] + " jobs waiting to be executed!");
                             break;
                         case "JOB_FAILED":
-                            System.err.println("Job " + arguments[2] + " failed: code=" + arguments[3] + " message=" + arguments[4]);
                             sendToFile(u.getNomeUtilizador(),"Job failed: code=" + arguments[3] + " message=" + arguments[4], arguments[2]);
                             break;
                         default:
@@ -105,8 +97,12 @@ public class ClientController {
 
     //get the absolute path of the folder "resultados"
     public static String getAbsolutePath(){
-        String currentWorkingDirectory = System.getProperty("user.dir");
-        return currentWorkingDirectory + "/src/resultados";
+        String currentDirectory = System.getProperty("user.dir");
+        File file = new File(currentDirectory,"resultados");
+        if (!file.exists()) {
+            file.mkdir();
+        }
+        return file.getAbsolutePath();
     }
 
     //establish the connection with the server
