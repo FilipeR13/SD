@@ -209,8 +209,20 @@ public class ClientController {
         System.out.print("Memória para o programa (MB):: ");
         String memoria = stdin.readLine();
 
+        //check if memoria is a number
+        try{
+            Integer.parseInt(memoria);
+        }catch(NumberFormatException e){
+            System.out.println("Memória inválida!");
+            return;
+        }
+
         // Read file into byte array and closing the file input stream to avoid memory leakage
         File file_execute = new File(file_name);
+        if(!file_execute.exists()){
+            System.out.println("File doesn't exist!");
+            return;
+        }
         FileInputStream read_file = new FileInputStream(file_execute);
         byte[] array = new byte[(int) file_execute.length()];
 
