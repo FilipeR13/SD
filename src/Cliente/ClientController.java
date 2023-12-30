@@ -32,6 +32,10 @@ public class ClientController {
         //write the result in the respective file
         public void sendToFile(String username, String result, String id){
             try {
+                File folder = new File(getAbsolutePath());
+                if (!folder.exists()) {
+                    folder.mkdir();
+                }
                 //create file if it doesn't exist
                 File file = new File(getAbsolutePath(),username + ".txt");
                 FileWriter writer = new FileWriter(file, true);
@@ -98,11 +102,7 @@ public class ClientController {
     //get the absolute path of the folder "resultados"
     public static String getAbsolutePath(){
         String currentDirectory = System.getProperty("user.dir");
-        File file = new File(currentDirectory,"resultados");
-        if (!file.exists()) {
-            file.mkdir();
-        }
-        return file.getAbsolutePath();
+        return currentDirectory + "/resultados";
     }
 
     //establish the connection with the server
