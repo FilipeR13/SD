@@ -44,7 +44,7 @@ public class ClientController {
 
         //get the result from the server and call the function to write it in the file
         public void getResult(String response, String id){
-            System.out.println("Server response: " + id + " " + response);
+            System.out.println("Program num. " + id + " was executed successfully!");
 
             sendToFile(u.getNomeUtilizador(),response, id);
         }
@@ -74,7 +74,7 @@ public class ClientController {
                             System.out.println("The server has " + arguments[0] + " MB of memory left and there are currently " + arguments[1] + " jobs waiting to be executed!");
                             break;
                         case "JOB_FAILED":
-                            System.out.println("Job " + arguments[2] + " failed: code=" + arguments[3] + " message=" + arguments[4]);
+                            System.err.println("Job " + arguments[2] + " failed: code=" + arguments[3] + " message=" + arguments[4]);
                             sendToFile(u.getNomeUtilizador(),"Job failed: code=" + arguments[3] + " message=" + arguments[4], arguments[2]);
                             break;
                         default:
