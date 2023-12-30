@@ -196,4 +196,12 @@ public class SafeDataInputStream {
         }
     }
 
+    public int read(byte[] buffer, int i, int min) throws IOException {
+        lock.lock();
+        try {
+            return dataInputStream.read(buffer, i, min);
+        } finally {
+            lock.unlock();
+        }
+    }
 }
