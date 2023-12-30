@@ -63,6 +63,12 @@ public class WorkerServer {
 
     //main function of the worker, connects to the server and waits for requests
     public static void main(String[] args) throws IOException {
+
+        if (args.length != 1 || !args[0].matches("\\d+")) {
+            System.out.println("Usage: java WorkerServer <max_memory>");
+            return;
+        }
+
         WorkerServer workerServer = new WorkerServer(args[0]);
         try {
             // Connect to the Main Server.Server
