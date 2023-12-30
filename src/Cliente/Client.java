@@ -1,7 +1,9 @@
+package Cliente;
+
+import Cliente.Account;
 import sd23.JobFunctionException;
 
 import java.io.*;
-import java.net.*;
 
 public class Client {
     private static Account acc = new Account();

@@ -1,3 +1,6 @@
+package Cliente;
+
+import Cliente.ClientController;
 import sd23.JobFunctionException;
 
 import java.io.IOException;

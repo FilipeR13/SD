@@ -1,3 +1,5 @@
+package Estruturas;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
@@ -51,6 +53,7 @@ public class Message {
         out.writeInt(payload.length());
 
         // if the payload is too big for the buffer, then it needs to keep writing in a loop until it has written all the payload
+
         byte[] payload_bytes = payload.getBytes(StandardCharsets.UTF_8);
         int written = 0;
         while (written < payload_bytes.length) {

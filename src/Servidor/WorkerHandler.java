@@ -1,3 +1,10 @@
+package Servidor;
+
+import Estruturas.Message;
+import Estruturas.SafeDataInputStream;
+import Estruturas.SafeDataOutputStream;
+import Trabalhador.Worker;
+
 import java.io.*;
 import java.net.Socket;
 

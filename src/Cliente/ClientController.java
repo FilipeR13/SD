@@ -1,3 +1,8 @@
+package Cliente;
+
+import Estruturas.Message;
+import Estruturas.SafeDataInputStream;
+import Estruturas.SafeDataOutputStream;
 import sd23.JobFunctionException;
 
 import java.io.*;

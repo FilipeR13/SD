@@ -1,15 +1,21 @@
+package Servidor;
+
+import Cliente.Account;
+import Estruturas.MyPriorityQueue;
+import Estruturas.SafeDataOutputStream;
+import Trabalhador.Worker;
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Server {
     private Map<String, Account> accounts;
     private Map<String, SafeDataOutputStream> connectedClients;
-    private  MyPriorityQueue<ProgramRequest> pendingPrograms;
-    private Map<Integer,Worker> connectedWorkers;
+    private MyPriorityQueue<ProgramRequest> pendingPrograms;
+    private Map<Integer, Worker> connectedWorkers;
 
     private final Lock accountsLock = new ReentrantLock();
     private final Lock connectedClientsLock = new ReentrantLock();
@@ -38,7 +44,7 @@ public class Server {
         return pendingPrograms;
     }
 
-    public Map<Integer,Worker> getConnectedWorkers() {
+    public Map<Integer, Worker> getConnectedWorkers() {
         return connectedWorkers;
     }
 

@@ -1,3 +1,10 @@
+package Servidor;
+
+import Estruturas.Message;
+import Estruturas.SafeDataOutputStream;
+import Servidor.Server;
+import Trabalhador.Worker;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.Condition;

@@ -1,5 +1,6 @@
-import java.io.DataOutputStream;
-import java.io.PrintWriter;
+package Trabalhador;
+
+import Estruturas.SafeDataOutputStream;
 
 public class Worker {
     private int worker_id;

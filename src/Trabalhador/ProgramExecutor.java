@@ -1,7 +1,12 @@
+package Trabalhador;
+
+import Estruturas.Message;
+import Estruturas.SafeDataOutputStream;
+import Servidor.ProgramRequest;
+import Trabalhador.WorkerServer;
 import sd23.JobFunction;
 import sd23.JobFunctionException;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;

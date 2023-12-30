@@ -1,3 +1,10 @@
+package Trabalhador;
+
+import Estruturas.Message;
+import Estruturas.SafeDataInputStream;
+import Estruturas.SafeDataOutputStream;
+import Servidor.ProgramRequest;
+
 import java.io.*;
 import java.net.Socket;
 
@@ -51,7 +58,7 @@ public class WorkerServer {
     public static void main(String[] args) throws IOException {
         WorkerServer workerServer = new WorkerServer();
         try {
-            // Connect to the Main Server
+            // Connect to the Main Server.Server
             Socket workerSocket = new Socket(SERVER_IP, SERVER_PORT);
             System.out.println("Connected to Main Server: " + workerSocket.getInetAddress().getHostAddress());
 

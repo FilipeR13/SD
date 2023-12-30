@@ -1,10 +1,14 @@
-import sd23.JobFunction;
-import sd23.JobFunctionException;
+package Servidor;
+
+import Cliente.Account;
+import Estruturas.Message;
+import Estruturas.SafeDataInputStream;
+import Estruturas.SafeDataOutputStream;
+import Servidor.Server;
+import Trabalhador.Worker;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.Map;
 
 public class ClientHandler implements Runnable {
     private Socket clientSocket;
